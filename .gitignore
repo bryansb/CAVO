@@ -1,0 +1,12 @@
+build
+bin
+.vscode
+reports
+*.csv
+*.stash
+# *.pro
+*.mp4
+*.mkv
+
+!video_test
+!MovingCar.mp4
