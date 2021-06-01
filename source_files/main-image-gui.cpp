@@ -164,12 +164,10 @@ void MainImageGUI::handleVideoChooserButton(){
 }
 
 void MainImageGUI::loadVideo(){
-    delete video;
+    video = NULL;
     string path = videoPath->text().toStdString();
     if (!path.empty()) {
         video = new Frame(videoPath->text().toStdString());
-    } else {
-        video = NULL;
     }
 }
 
