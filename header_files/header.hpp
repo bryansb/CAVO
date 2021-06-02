@@ -86,8 +86,11 @@ class Frame : public VideoCapture {
     public:
         Frame(string path);
         Frame(int cam);
-        bool nextFrame();
+        bool nextFrame(bool = false, int = 1);
+        void flipFrame(int = 1);
+
         cv::Mat getFrame();
+        void setFrame(cv::Mat frame);
 
 };
 
@@ -117,6 +120,9 @@ class Camera : public Frame {
         void applyLaplacian();
 
     public:
+        int width;
+        int height;
+
         Camera();
         void applyColorSpace(int color);
         void applyFilter(int filter);
@@ -124,33 +130,47 @@ class Camera : public Frame {
         void applyMorphologicalOperation(int operation);
 };
 
-class MergeCameraVideo {
-
-    private:
-        Frame *video;
-        Camera *camera;
-
-    public: 
-        void mergeCameraVideo(Frame video, Camera camera);   
-        void addMatToWidget(cv::Mat, QString, int, int);
-
-
-};
-
 class MatRender : public QWidget{
     private:
+        // QGroupBox *boxImage;
         QVBoxLayout *layout;
         QLabel *titleLabel;
         QLabel *frameLabel;
-        QImage *image;
+
+        cv::Mat image;
 
         double ws;
         double hs;
 
     public:
+        bool busy = false;
+        
         MatRender(string title,
                     QWidget *parent);
         void render(cv::Mat, int w, double percent);
+        void setTitle(string title);
+};
+
+class MergeFrameRender : public MatRender {
+
+    private:
+        Frame *video;
+        Camera *camera;
+        cv::Mat result;
+        cv::Mat videoRS;
+
+    public:
+        MergeFrameRender(string title, QWidget *parent);
+        MergeFrameRender(Frame *video, Camera *camera, string title,
+                    QWidget *parent);
+        void merge();
+
+        cv::Mat getResult();
+        void setVideo(Frame *video);
+        void setCamera(Camera *camera);
+        // void se
+
+
 };
 
 class MainImageGUI : public QMainWindow {
@@ -164,14 +184,20 @@ class MainImageGUI : public QMainWindow {
         void handleVideoChooserButton();
     
     private:
+        const int NS_PER_SECOND = 1000000000;
+        const int UPS_OBJECT = 20;
+        const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
+
+        bool runningVideo = false;
+        string pathToVideo;
+
         // MergeCameraVideo result;
         Camera *camera;
         Frame *video;
         MatRender *cameraRender;
         MatRender *videoRender;
+        MergeFrameRender *mergeFrameRender;
 
-        std::thread *processThread;
-        // std::thread *readCameraThread;
         std::vector<std::thread > thread_pool;
 
         QGridLayout *layout;
@@ -194,13 +220,15 @@ class MainImageGUI : public QMainWindow {
         SliderGroup *channel3MaxSlider;
 
         const string APP_NAME = "CAVO";
-        bool RUNNING = true;
+        bool running = true;
 
         void startProcessConverter();
         double getTimeInMilliseconds();
         void loadVideo();
         void readCameraAndRender();
         long nanoTime();
+
+        void mergeVideoCamera();
 
     public:
         int w;

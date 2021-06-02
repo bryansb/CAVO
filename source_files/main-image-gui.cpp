@@ -13,7 +13,7 @@ int MainImageGUI::init(){
     this->setCentralWidget(widget);
     widget->setLayout(layout);
 
-    // --- ROW 0
+    // --- ROW 0, 0
 
     QGroupBox *boxImage = new QGroupBox("Video", widget);
     boxImage->setFixedHeight(100);
@@ -32,7 +32,7 @@ int MainImageGUI::init(){
     connect(imageChooserButton, &QPushButton::released,this, &MainImageGUI::handleVideoChooserButton);
     videoChooserLayout->addWidget(imageChooserButton);
 
-    // --- ROW 1
+    // --- ROW 1, 0
     QGroupBox *channelBox = new QGroupBox("Canales", widget);
     channelBox->setMaximumWidth(300);
     channelBox->setMaximumHeight(600);
@@ -97,7 +97,7 @@ int MainImageGUI::init(){
     stackedWidget->addWidget(channel3MaxSlider);
     channelLayout->addWidget(stackedWidget);
 
-    // --- ROW 2
+    // --- ROW 1, 1
 
     imageBox = new QGroupBox("Resultado", widget);
     QScrollArea* scrollArea = new QScrollArea();
@@ -113,10 +113,13 @@ int MainImageGUI::init(){
     resultLayout->addWidget(resultWidget);
 
     cameraRender = new MatRender("Cámara", resultWidget);
-    resultLayout->addWidget(cameraRender, 0, 0);
+    resultLayout->addWidget(cameraRender, 0, 0, 1, 1);
 
     videoRender = new MatRender("Video", resultWidget);
-    resultLayout->addWidget(videoRender, 1, 0);
+    resultLayout->addWidget(videoRender, 1, 0, 1, 1);
+
+    mergeFrameRender = new MergeFrameRender("Seleccione un Video", resultWidget);
+    resultLayout->addWidget(mergeFrameRender, 0, 1, 2, 1);
 
     layout->setRowStretch(0, 1);
     layout->setRowStretch(1, 5);
@@ -130,8 +133,13 @@ int MainImageGUI::init(){
 }
 
 void MainImageGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent){
-    if (w != 0)
-        render->render(image, w, percent);
+    try {
+        if (w != 0 && !render->busy)
+            render->render(image, w, percent);
+    } catch(exception&){
+        cout << "LOG: Render Busy" << endl;
+        render->busy = false;
+    }
 }
 
 void MainImageGUI::handleButton(){
@@ -160,15 +168,19 @@ void MainImageGUI::handleButton(){
 void MainImageGUI::handleVideoChooserButton(){
     videoPath->setText(QFileDialog::getOpenFileName(this,
         tr("Seleccione un Video"), "../", tr("Video Files (*.mp4 *.mkv)")));
+    pathToVideo = videoPath->text().toStdString();
     loadVideo();
 }
 
 void MainImageGUI::loadVideo(){
-    video = NULL;
-    string path = videoPath->text().toStdString();
-    if (!path.empty()) {
-        video = new Frame(videoPath->text().toStdString());
+    runningVideo = false;
+    if (!pathToVideo.empty()) {
+        delete video;
+        video = NULL;    
+        video = new Frame(pathToVideo);
+        mergeVideoCamera();
     }
+    runningVideo = true;
 }
 
 void MainImageGUI::clearLayout(QLayout *layout) {
@@ -191,12 +203,12 @@ void MainImageGUI::resizeEvent(QResizeEvent* event) {
 void MainImageGUI::closeEvent (QCloseEvent *event){
     QMessageBox::StandardButton resBtn = QMessageBox::question( this, QString::fromStdString(APP_NAME),
                                                                 tr("Are you sure?\n"),
-                                                                QMessageBox::Cancel | QMessageBox::No | QMessageBox::Yes,
+                                                                QMessageBox::No | QMessageBox::Yes,
                                                                 QMessageBox::Yes);
     if (resBtn != QMessageBox::Yes) {
         event->ignore();
     } else {
-        RUNNING = false;
+        running = false;
         for (int i = 0; i < thread_pool.size(); i++){
             thread_pool[i].join();
         }
@@ -206,10 +218,16 @@ void MainImageGUI::closeEvent (QCloseEvent *event){
 
 void MainImageGUI::readCameraAndRender(){
     camera = new Camera();
+    mergeFrameRender->setCamera(camera);
     w = resultLayout->geometry().width();
-    while(RUNNING){
-        // cout << "ENTRA" << endl;
-        if(camera->nextFrame()){
+    bool firstFrame = true;
+    while(running){
+        if(camera->nextFrame(true)){
+            if (firstFrame) {
+                camera->width = camera->getFrame().cols;
+                camera->height = camera->getFrame().rows;
+                firstFrame = false;
+            }
             addMatToWidget(cameraRender, camera->getFrame());
         }
     }
@@ -230,10 +248,6 @@ void MainImageGUI::startProcessConverter(){
     int fps = 0;
     int ups = 0;
 
-    const int NS_PER_SECOND = 1000000000;
-    const int UPS_OBJECT = 30;
-    const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
-
     long updateReference = nanoTime();
     long countReference = nanoTime();
 
@@ -242,7 +256,7 @@ void MainImageGUI::startProcessConverter(){
 
     long loopStart;
 
-    while(RUNNING){
+    while(running){
         loopStart = nanoTime();
         timeElapsed = loopStart - updateReference;
         updateReference = loopStart;
@@ -250,18 +264,26 @@ void MainImageGUI::startProcessConverter(){
         delta += timeElapsed / NS_PER_UPDATES;
 
         while (delta >= 1) {
-            ups++;
-            delta--;
-            // cout << video->getFrame() << endl;
-            if (video != NULL) {
+            if (video != NULL && runningVideo) {
                 if (video->nextFrame()) {
-                    addMatToWidget(videoRender, video->getFrame());
+                    try {
+                        // Update
+                        mergeFrameRender->merge();
+                    
+                        // Paint
+                        addMatToWidget(mergeFrameRender, mergeFrameRender->getResult(), 0.6);
+                        addMatToWidget(videoRender, video->getFrame());
+
+                    }catch (exception&){
+                        cout << "LOG: Render is busy" << endl;
+                    }
                 } else {
                     loadVideo();
                 }
             }
+            ups++;
+            delta--;
             fps++;
-
         }
 
         if (nanoTime() - countReference > NS_PER_SECOND) {
@@ -277,4 +299,9 @@ void MainImageGUI::startProcess(){
     thread_pool.push_back(std::thread(&MainImageGUI::readCameraAndRender, this));
     thread_pool.push_back(std::thread(&MainImageGUI::startProcessConverter, this));
     
+}
+
+void MainImageGUI::mergeVideoCamera(){
+    mergeFrameRender->setTitle("Resta Normal");
+    mergeFrameRender->setVideo(video);
 }

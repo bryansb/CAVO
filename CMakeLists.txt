@@ -20,6 +20,7 @@ add_executable(cavo
     "source_files/frame.cpp"
     "source_files/camera.cpp"
     "source_files/mat-render.cpp"
+    "source_files/merge-frame-render.cpp"
     "source_files/main.cpp"
     "source_files/slider-group.cpp"
     "source_files/main-image-gui.cpp"
