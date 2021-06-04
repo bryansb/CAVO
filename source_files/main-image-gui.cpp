@@ -5,7 +5,8 @@ MainImageGUI::MainImageGUI(){
 }
 
 int MainImageGUI::init(){
-    this->resize(1000, 800);
+    this->resize(1500, 900);
+    setWindowFlags(Qt::Dialog | Qt::MSWindowsFixedSizeDialogHint);
     this->setWindowTitle(QString::fromStdString(APP_NAME));
     widget = new QWidget(this);
     layout = new QGridLayout(widget);
@@ -26,6 +27,7 @@ int MainImageGUI::init(){
     QLabel *dirLabel = new QLabel("Directorio:");
     videoChooserLayout->addWidget(dirLabel);
     videoPath = new QLineEdit();
+    videoPath->setReadOnly(true);
     videoChooserLayout->addWidget(videoPath);
     
     imageChooserButton = new QPushButton("Seleccionar Video", imageChooserWidget);
@@ -37,8 +39,37 @@ int MainImageGUI::init(){
     channelBox->setMaximumWidth(300);
     channelBox->setMaximumHeight(600);
     // channelBox->setSizePolicy
-    layout->addWidget(channelBox, 1, 0, 1, 1);
-    QHBoxLayout *allChannelLayout = new QHBoxLayout(channelBox);
+    layout->addWidget(channelBox, 1, 0, 2, 1);
+
+    QVBoxLayout * colorSpaceLayout = new QVBoxLayout(channelBox);
+
+    QWidget * kernelWidget = new QWidget(channelBox);
+    colorSpaceLayout->addWidget(kernelWidget);
+    QHBoxLayout * kernelLayout = new QHBoxLayout(kernelWidget);
+
+
+    kernelSizeBox = new QSpinBox(kernelWidget);
+    kernelSizeBox->setMinimum(3);
+    kernelSizeBox->setSingleStep(2);
+    kernelSizeBox->setPrefix("Kernel: ");
+    kernelLayout->addWidget(kernelSizeBox);
+
+    kernelButton = new QPushButton("Aplicar", kernelWidget);
+    connect(kernelButton, &QPushButton::released,this, &MainImageGUI::handleKernelButton);
+    kernelLayout->addWidget(kernelButton);
+
+    colorSpaceCbox = new QComboBox(channelBox);
+    colorSpaceCbox->addItems({"RGB", "HSV", "BGR", "YCbCr", "Lab"});
+    colorSpaceLayout->addWidget(new QLabel("Espacios de Color:"));
+    colorSpaceLayout->addWidget(colorSpaceCbox);
+    
+    connect(colorSpaceCbox, QOverload<int>::of(&QComboBox::activated),
+            this, &MainImageGUI::handleSpaceColor);
+
+    QWidget * allChannelWidget = new QWidget(channelBox);
+    colorSpaceLayout->addWidget(allChannelWidget);
+
+    QHBoxLayout *allChannelLayout = new QHBoxLayout(allChannelWidget);
 
     // ------------- 
 
@@ -99,26 +130,63 @@ int MainImageGUI::init(){
 
     // --- ROW 1, 1
 
+    QGroupBox *allFilterBox = new QGroupBox("Filtros", widget);
+    allFilterBox->setMaximumHeight(100);
+    layout->addWidget(allFilterBox, 1, 1, 1, 1);
+    QHBoxLayout *allFilterLayout = new QHBoxLayout(allFilterBox);
+
+    QWidget *filterWidget = new QWidget(allFilterBox);
+    allFilterLayout->addWidget(filterWidget);
+    QVBoxLayout *filterLayout = new QVBoxLayout(filterWidget);
+
+    filterLayout->addWidget(new QLabel("Filtro:"));
+    filterCbox = new QComboBox(filterWidget);
+    filterCbox->addItems({"Ninguno", "Median Blur", "Gaussian Blur"});
+    filterLayout->addWidget(filterCbox);
+
+    filterWidget = new QWidget(allFilterBox);
+    allFilterLayout->addWidget(filterWidget);
+    filterLayout = new QVBoxLayout(filterWidget);
+
+    filterLayout->addWidget(new QLabel("Detección de Bordes:"));
+    edgeDetectorCbox = new QComboBox(filterWidget);
+    edgeDetectorCbox->addItems({"Ninguno", "Canny", "Sobel", "Laplacian"});
+    filterLayout->addWidget(edgeDetectorCbox);
+
+    filterWidget = new QWidget(allFilterBox);
+    allFilterLayout->addWidget(filterWidget);
+    filterLayout = new QVBoxLayout(filterWidget);
+
+    filterLayout->addWidget(new QLabel("Operación Morfológica:"));
+    morphologicalOperationCbox = new QComboBox(filterWidget);
+    morphologicalOperationCbox->addItems({"Ninguno", "Dilatación", "Erosión", "Abierto", "Cerrado", "Black Hat", "Top Hat", "Ecuación"});
+    filterLayout->addWidget(morphologicalOperationCbox);
+    connect(morphologicalOperationCbox, QOverload<int>::of(&QComboBox::activated),
+            this, &MainImageGUI::handleMorphologicOperation);
+
+    // --- ROW 2, 1
+
     imageBox = new QGroupBox("Resultado", widget);
     QScrollArea* scrollArea = new QScrollArea();
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(imageBox);
-    layout->addWidget(scrollArea, 1, 1, 1, 1);
+    layout->addWidget(scrollArea, 2, 1, 1, 1);
 
     resultLayout = new QGridLayout(imageBox);
     resultWidget = new QWidget(imageBox);
 
     // AUX
-
+    w = imageBox->width();
+    // cout << "w:" << w << endl;
     resultLayout->addWidget(resultWidget);
 
-    cameraRender = new MatRender("Cámara", resultWidget);
+    cameraRender = new MatRender("Cámara", w,  resultWidget);
     resultLayout->addWidget(cameraRender, 0, 0, 1, 1);
 
-    videoRender = new MatRender("Video", resultWidget);
+    videoRender = new MatRender("Video", w, resultWidget);
     resultLayout->addWidget(videoRender, 1, 0, 1, 1);
 
-    mergeFrameRender = new MergeFrameRender("Seleccione un Video", resultWidget);
+    mergeFrameRender = new MergeFrameRender("Seleccione un Video", w, resultWidget);
     resultLayout->addWidget(mergeFrameRender, 0, 1, 2, 1);
 
     layout->setRowStretch(0, 1);
@@ -127,6 +195,11 @@ int MainImageGUI::init(){
     layout->setColumnStretch(1, 2);
 
     this->show();
+    w = imageBox->width();
+    cameraRender->setW(w);
+    videoRender->setW(w);
+    mergeFrameRender->setW(w);
+    
     video = NULL;
     startProcess();
     return 0;
@@ -134,20 +207,26 @@ int MainImageGUI::init(){
 
 void MainImageGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent){
     try {
-        if (w != 0 && !render->busy)
-            render->render(image, w, percent);
+        
+        // std::lock_guard<std::mutex> guard(frame_mutex);
+        // int w = this->w;
+        // if (!render->busy) {
+            
+            // render->setW(w);
+            render->render(image, percent);
+            // render->busy = false;
+        // }
     } catch(exception&){
-        cout << "LOG: Render Busy" << endl;
+        cout << "LOG: Render Busy on Rendering" << endl;
         render->busy = false;
     }
 }
 
-void MainImageGUI::handleButton(){
-    cout << "ENTRA" << endl;
+void MainImageGUI::handleKernelButton(){
     try {
-        if (kernelSize->text().toStdString().empty()) {
-            throw(20);
-        }
+        // MergeFrameRender->op
+        int size = kernelSizeBox->value();
+        mergeFrameRender->setKernelSize(size);
     }catch (int e) {
         if (e == 20) {
             QMessageBox messageBox;
@@ -196,10 +275,6 @@ void MainImageGUI::clearLayout(QLayout *layout) {
     }
 }
 
-void MainImageGUI::resizeEvent(QResizeEvent* event) {
-    QMainWindow::resizeEvent(event);
-    w = resultLayout->geometry().width();
-}
 void MainImageGUI::closeEvent (QCloseEvent *event){
     QMessageBox::StandardButton resBtn = QMessageBox::question( this, QString::fromStdString(APP_NAME),
                                                                 tr("Are you sure?\n"),
@@ -208,10 +283,7 @@ void MainImageGUI::closeEvent (QCloseEvent *event){
     if (resBtn != QMessageBox::Yes) {
         event->ignore();
     } else {
-        running = false;
-        for (int i = 0; i < thread_pool.size(); i++){
-            thread_pool[i].join();
-        }
+        stopProcess();
         event->accept();
     }
 }
@@ -219,16 +291,28 @@ void MainImageGUI::closeEvent (QCloseEvent *event){
 void MainImageGUI::readCameraAndRender(){
     camera = new Camera();
     mergeFrameRender->setCamera(camera);
-    w = resultLayout->geometry().width();
+
     bool firstFrame = true;
+    Mat cameraShow;
     while(running){
-        if(camera->nextFrame(true)){
-            if (firstFrame) {
-                camera->width = camera->getFrame().cols;
-                camera->height = camera->getFrame().rows;
-                firstFrame = false;
+        try {
+            if(camera->nextFrame(true)){
+                cameraShow = camera->getFrame().clone();
+                mergeFrameRender->applyColorSpace(cameraShow, FRAME_TO_RGB);
+                if (firstFrame) {
+                    camera->width = cameraShow.cols;
+                    camera->height = cameraShow.rows;
+                    firstFrame = false;
+                }
+                //
+                // w = imageBox->width();
+                //
+                // std::lock_guard<std::mutex> guard(frame_mutex);
+                addMatToWidget(cameraRender, cameraShow);
             }
-            addMatToWidget(cameraRender, camera->getFrame());
+        
+        } catch (exception&){
+            cout << "LOG: Camera Render is busy" << endl;
         }
     }
 }
@@ -242,8 +326,6 @@ long MainImageGUI::nanoTime(){
 
 void MainImageGUI::startProcessConverter(){
 
-    w = resultLayout->geometry().width();
-
     int aps = 0;
     int fps = 0;
     int ups = 0;
@@ -256,6 +338,14 @@ void MainImageGUI::startProcessConverter(){
 
     long loopStart;
 
+    int channel1Min = 0;
+    int channel2Min;
+    int channel3Min;
+
+    int channel1Max;
+    int channel2Max;
+    int channel3Max;
+
     while(running){
         loopStart = nanoTime();
         timeElapsed = loopStart - updateReference;
@@ -264,22 +354,24 @@ void MainImageGUI::startProcessConverter(){
         delta += timeElapsed / NS_PER_UPDATES;
 
         while (delta >= 1) {
-            if (video != NULL && runningVideo) {
-                if (video->nextFrame()) {
-                    try {
-                        // Update
-                        mergeFrameRender->merge();
-                    
-                        // Paint
-                        addMatToWidget(mergeFrameRender, mergeFrameRender->getResult(), 0.6);
-                        addMatToWidget(videoRender, video->getFrame());
+            try {
+                if (video != NULL && runningVideo) {
+                    if (video->nextFrame()) {
+                            channelValues(channel1Min, channel2Min, channel3Min, 
+                                channel1Max, channel2Max, channel3Max);
+                            mergeFrameRender->applyColorSpace(video->getFrame(), FRAME_TO_RGB);
 
-                    }catch (exception&){
-                        cout << "LOG: Render is busy" << endl;
+                            mergeFrameRender->applyMorphologicalOperation(camera->getFrame());
+                            mergeFrameRender->merge();
+                            addMatToWidget(mergeFrameRender, mergeFrameRender->getResult(), 0.6);
+                            addMatToWidget(videoRender, video->getFrame());
+                    } else {
+                        loadVideo();
                     }
-                } else {
-                    loadVideo();
+                
                 }
+            }catch (exception&){
+                cout << "LOG: Processing video was busy" << endl;
             }
             ups++;
             delta--;
@@ -287,6 +379,7 @@ void MainImageGUI::startProcessConverter(){
         }
 
         if (nanoTime() - countReference > NS_PER_SECOND) {
+            // cout << "FPS:" << fps << endl;
             ups = 0;
             fps = 0;
             countReference = nanoTime();
@@ -295,13 +388,196 @@ void MainImageGUI::startProcessConverter(){
 
 }
 
-void MainImageGUI::startProcess(){
-    thread_pool.push_back(std::thread(&MainImageGUI::readCameraAndRender, this));
-    thread_pool.push_back(std::thread(&MainImageGUI::startProcessConverter, this));
-    
-}
-
 void MainImageGUI::mergeVideoCamera(){
     mergeFrameRender->setTitle("Resta Normal");
     mergeFrameRender->setVideo(video);
+}
+
+void MainImageGUI::channelValues(int & c1Min, int & c2Min,int & c3Min, 
+    int & c1Max, int & c2Max, int & c3Max){
+    c1Min = channel1MinSlider->getValue();
+    c2Min = channel2MinSlider->getValue();
+    c3Min = channel3MinSlider->getValue();
+
+    c1Max = channel1MaxSlider->getValue();
+    c2Max = channel2MaxSlider->getValue();
+    c3Max = channel3MaxSlider->getValue();
+}
+
+// HANDLE
+void MainImageGUI::handleSpaceColor(int i){
+    // "RGB", "HSV", "BGR", "YCbCr", "Lab"
+    switch (i) {
+    case 0:
+        changeChannelValues(0, 255, "R", channel1MinSlider);
+        changeChannelValues(0, 255, "G", channel2MinSlider);
+        changeChannelValues(0, 255, "B", channel3MinSlider);
+
+        changeChannelValues(0, 255, "R", channel1MaxSlider);
+        changeChannelValues(0, 255, "G", channel2MaxSlider);
+        changeChannelValues(0, 255, "B", channel3MaxSlider);
+        break;
+    case 1:
+        changeChannelValues(0, 180, "H", channel1MinSlider);
+        changeChannelValues(0, 255, "S", channel2MinSlider);
+        changeChannelValues(0, 255, "V", channel3MinSlider);
+
+        changeChannelValues(0, 180, "H", channel1MaxSlider);
+        changeChannelValues(0, 255, "S", channel2MaxSlider);
+        changeChannelValues(0, 255, "V", channel3MaxSlider);
+        break;
+    case 2:
+        changeChannelValues(0, 255, "B", channel1MinSlider);
+        changeChannelValues(0, 255, "G", channel2MinSlider);
+        changeChannelValues(0, 255, "R", channel3MinSlider);
+
+        changeChannelValues(0, 255, "B", channel1MaxSlider);
+        changeChannelValues(0, 255, "G", channel2MaxSlider);
+        changeChannelValues(0, 255, "R", channel3MaxSlider);
+        break;
+    case 3:
+        changeChannelValues(0, 255, "Y", channel1MinSlider);
+        changeChannelValues(0, 255, "Cb", channel2MinSlider);
+        changeChannelValues(0, 255, "Cr", channel3MinSlider);
+
+        changeChannelValues(0, 255, "Y", channel1MaxSlider);
+        changeChannelValues(0, 255, "Cb", channel2MaxSlider);
+        changeChannelValues(0, 255, "Cr", channel3MaxSlider);
+        break;
+
+    case 4:
+        changeChannelValues(0, 100, "L", channel1MinSlider);
+        changeChannelValues(-127, 127, "a", channel2MinSlider);
+        changeChannelValues(-127, 127, "b", channel3MinSlider);
+
+        changeChannelValues(0, 100, "L", channel1MaxSlider);
+        changeChannelValues(-127, 127, "a", channel2MaxSlider);
+        changeChannelValues(-127, 127, "b", channel3MaxSlider);
+        break;
+    
+    default:
+        break;
+    }
+    changeColorSpace();
+}
+
+void MainImageGUI::changeChannelValues(int min, int max, string title, SliderGroup * slider){
+    slider->setValue(0);
+    slider->setMinimum(min);
+    slider->setMaximum(max);
+    slider->setTitleToBox(title);
+}
+
+void MainImageGUI::changeColorSpace(){
+    // "RGB", "HSV", "BGR", "YCbCr", "Lab"
+    int i = colorSpaceCbox->currentIndex();
+    switch (i) {
+    case 0:
+        mergeFrameRender->setColorSpace(FRAME_TO_RGB);
+        break;
+    case 1:
+        mergeFrameRender->setColorSpace(FRAME_TO_HSV);
+        break;
+    case 2:
+        mergeFrameRender->setColorSpace(FRAME_TO_BGR);
+        break;
+    case 3:
+        mergeFrameRender->setColorSpace(FRAME_TO_YCbCr);
+        break;
+
+    case 4:
+        mergeFrameRender->setColorSpace(FRAME_TO_Lab);
+        break;
+    
+    default:
+        break;
+    }
+}
+
+void MainImageGUI::handleFilter(int i){
+    // "Median Blur", "Gaussian Blur"
+    // int i = colorSpaceCbox->currentIndex();
+    switch (i) {
+    case 0:
+        mergeFrameRender->setFilter(-1);
+    case 1:
+        mergeFrameRender->setFilter(FRAME_TO_MEDBLUR);
+        break;
+    case 2:
+        mergeFrameRender->setFilter(FRAME_TO_GAUBLUR);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void MainImageGUI::handleEdgeDetector(int i){
+    // "Canny", "Sobel", "Laplacian"
+    // int i = colorSpaceCbox->currentIndex();
+    switch (i) {
+    case 0:
+        mergeFrameRender->setEdgeDetector(-1);
+    case 1:
+        mergeFrameRender->setEdgeDetector(FRAME_TO_CANNY);
+    case 2:
+        mergeFrameRender->setEdgeDetector(FRAME_TO_SOBEL);
+        break;
+    case 3:
+        mergeFrameRender->setEdgeDetector(FRAME_TO_LAPLACIAN);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void MainImageGUI::handleMorphologicOperation(int i){
+    // "Dilatación", "Erosión", "Abierto", "Cerrado", "Black Hat", "Top Hat
+
+    switch (i) {
+    case 0:
+        mergeFrameRender->setMorphologicalOperation(-1);
+        break;
+    case 1:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_DILATATION);
+        break;
+    case 2:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_EROSION);
+        break;
+    case 3:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_OPEN);
+        break;
+    case 4:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_CLOSE);
+        break;
+
+    case 5:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_BLACKHAT);
+        break;
+    case 6:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_TOPHAT);
+        break;
+    case 7:
+        mergeFrameRender->setMorphologicalOperation(FRAME_TO_EQUATION);
+        break;
+
+    default:
+        break;
+    }
+}
+
+void MainImageGUI::stopProcess(){
+    running = false;
+    for (int i = 0; i < thread_pool.size(); i++){
+        thread_pool[i].join();
+    }
+}
+
+void MainImageGUI::startProcess(){
+    thread_pool.clear();
+    running = true;
+    thread_pool.push_back(std::thread(&MainImageGUI::readCameraAndRender, this));
+    thread_pool.push_back(std::thread(&MainImageGUI::startProcessConverter, this));
+    
 }

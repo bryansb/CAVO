@@ -1,7 +1,8 @@
 #include "../header_files/header.hpp"
 
-MatRender::MatRender(string title, QWidget *parent)
+MatRender::MatRender(string title, int w, QWidget *parent)
     :QWidget(parent){
+    this->w = w;
     layout = new QVBoxLayout(this);
     frameLabel = new QLabel(this);
     titleLabel = new QLabel(QString::fromStdString(title));
@@ -11,16 +12,22 @@ MatRender::MatRender(string title, QWidget *parent)
     layout->addWidget(frameLabel);
 }
 
-void MatRender::render(cv::Mat img, int w, double percent){
-    busy = true;
-    image = img.clone();
-    ws = ((double)w * percent);
-    hs = (ws / image.cols) * image.rows;
-    cv::resize(image, image, Size(abs(ws), abs(hs)));
-    frameLabel->setPixmap(QPixmap::fromImage(QImage(image.data, image.cols, image.rows, image.step, QImage::Format_RGB888)));
-    busy = false;
+void MatRender::render(cv::Mat img, double percent){
+    Mat image = img.clone();
+    if (image.cols != 0 && image.rows != 0) {
+        ws = ((double)w * percent);
+        hs = (ws / image.cols) * image.rows;
+        cv::resize(image, image, Size(abs(ws), abs(hs)));
+        qimage = QImage((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+        
+        frameLabel->setPixmap(QPixmap::fromImage(qimage.copy()));
+    }
 }
 
 void MatRender::setTitle(string title){
     titleLabel->setText(QString::fromStdString(title));
+}
+
+void MatRender::setW(int w) {
+    this->w = w;
 }

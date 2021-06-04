@@ -2,7 +2,7 @@
 #include <iostream>
 using namespace std;
 
-SliderGroup::SliderGroup(Qt::Orientation orientation, const QString &title,
+SliderGroup::SliderGroup(Qt::Orientation orientation, QString title,
                            QWidget *parent) 
     : QGroupBox(title, parent) {
 
@@ -11,6 +11,13 @@ SliderGroup::SliderGroup(Qt::Orientation orientation, const QString &title,
     // slider->setTickPosition(QSlider::TicksBothSides);
     // slider->setTickInterval(10);
     // slider->setSingleStep(1);
+
+    // QFont font;
+    // font.setBold(true);
+    // font.setPixelSize(20);
+    // setFont(font);
+
+    setStyleSheet("QGroupBox { font-weight: bold; font-size: 15px; } ");
 
     dial = new QDial;
     dial->setFocusPolicy(Qt::StrongFocus);
@@ -62,4 +69,12 @@ void SliderGroup::invertAppearance(bool invert)
 
 void SliderGroup::changeValue(){
     setValue(dial->value());
+}
+
+void SliderGroup::setTitleToBox(string title) {
+    this->setTitle(QString::fromStdString(title));
+}
+
+int SliderGroup::getValue() {
+    return dial->value();
 }

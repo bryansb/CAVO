@@ -1,3 +1,5 @@
+#include <string>
+
 #include <QSlider>
 #include <QWidget>
 #include <QGroupBox>
@@ -7,6 +9,8 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QLabel>
+
+using namespace std;
 
 class SliderGroup : public QGroupBox{
     
@@ -18,10 +22,12 @@ class SliderGroup : public QGroupBox{
         QDial *dial;
         QLabel *value;
 
-        SliderGroup(Qt::Orientation orientation, const QString &title,
+        SliderGroup(Qt::Orientation orientation, QString title,
                     QWidget *parent);
         void setValue(int value);
         void setMinimum(int value);
         void setMaximum(int value);
         void invertAppearance(bool invert);
+        void setTitleToBox(string title);
+        int getValue();
 };

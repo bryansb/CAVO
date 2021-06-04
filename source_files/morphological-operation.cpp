@@ -4,33 +4,44 @@ MorphologicalOperation::MorphologicalOperation(int width, int height){
     this->kernel = cv::getStructuringElement(MORPH_CROSS, Size(width, height));
 }
 
-cv::Mat MorphologicalOperation::applyErosion(cv::Mat image){
-    cv::Mat erosionImg;
-    cv::morphologyEx(image, erosionImg, MORPH_ERODE, kernel);
-    return erosionImg;
+cv::Mat MorphologicalOperation::applyErosion(cv::Mat & image){
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_ERODE, kernel);
+    return result;
 }
 
 cv::Mat MorphologicalOperation::applyDilatation(cv::Mat image){
-    cv::Mat dilatationImg;
-    cv::morphologyEx(image, dilatationImg, MORPH_DILATE, kernel);
-    return dilatationImg;
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_DILATE, kernel);
+    return result;
+}
+
+cv::Mat MorphologicalOperation::applyOpen(cv::Mat image){
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_OPEN, kernel);
+    return result;
+}
+
+cv::Mat MorphologicalOperation::applyClose(cv::Mat image){
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_CLOSE, kernel);
+    return result;
 }
 
 cv::Mat MorphologicalOperation::applyTopHat(cv::Mat image){
-    cv::Mat topHatImg;
-    cv::morphologyEx(image, topHatImg, MORPH_TOPHAT, kernel);
-    return topHatImg;
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_TOPHAT, kernel);
+    return result;
 }
 
 cv::Mat MorphologicalOperation::applyBlackHat(cv::Mat image){
-    cv::Mat blackHatImg;
-    cv::morphologyEx(image, blackHatImg, MORPH_BLACKHAT, kernel);
-    return blackHatImg;
+    Mat result;
+    cv::morphologyEx(image, result, MORPH_BLACKHAT, kernel);
+    return result;
 }
 
 cv::Mat MorphologicalOperation::applyEquation(cv::Mat image){
-    cv::Mat retultImg = image + (applyTopHat(image) - applyBlackHat(image));
-    return retultImg;
+    return image + (applyTopHat(image) - applyBlackHat(image));
 }
 
 void MorphologicalOperation::createKernel(int size){
