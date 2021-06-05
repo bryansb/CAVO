@@ -1,4 +1,4 @@
-#include "../../../../../header_files/main-cavo-gui.hpp"
+#include "../../../../../header_files/main_cavo_gui.hpp"
 
 MainCavoGUI::MainCavoGUI(){}
 
@@ -45,13 +45,6 @@ int MainCavoGUI::init(){
     colorSpaceLayout->addWidget(kernelWidget);
     QHBoxLayout * kernelLayout = new QHBoxLayout(kernelWidget);
 
-
-    // kernelSizeBox = new QSpinBox(kernelWidget);
-    // kernelSizeBox->setMinimum(3);
-    // kernelSizeBox->setSingleStep(2);
-    // kernelSizeBox->setPrefix("Kernel: ");
-    // kernelLayout->addWidget(kernelSizeBox);
-
     kernelButton = new QPushButton("Refrescar", kernelWidget);
     kernelButton->setStyleSheet("QPushButton {background-color: #3D72A4; color: white; font-size: 14px; font-weight: bold;}");
     kernelButton->setFixedHeight(35);
@@ -81,22 +74,25 @@ int MainCavoGUI::init(){
     QVBoxLayout *channelLayout = new QVBoxLayout(channelWidget);
 
     channel1MinSlider = new SliderGroup(Qt::Horizontal, tr("R"), channelWidget);
-    channel1MinSlider->setMaximum(255);
     QStackedWidget *stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel1MinSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel1MinSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel1Min);
+    channel1MinSlider->setMaximum(255);
 
     channel2MinSlider = new SliderGroup(Qt::Horizontal, tr("G"), channelWidget);
     channel2MinSlider->setMaximum(255);
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel2MinSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel2MinSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel2Min);
 
     channel3MinSlider = new SliderGroup(Qt::Horizontal, tr("B"), channelWidget);
     channel3MinSlider->setMaximum(255);
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel3MinSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel3MinSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel3Min);
     
 
     // ----------
@@ -115,6 +111,7 @@ int MainCavoGUI::init(){
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel1MaxSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel1MaxSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel1Max);
 
     channel2MaxSlider = new SliderGroup(Qt::Horizontal, tr("G"), channelWidget);
     channel2MaxSlider->setMaximum(255);
@@ -122,6 +119,7 @@ int MainCavoGUI::init(){
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel2MaxSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel2MaxSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel2Max);
 
     channel3MaxSlider = new SliderGroup(Qt::Horizontal, tr("B"), channelWidget);
     channel3MaxSlider->setMaximum(255);
@@ -129,6 +127,7 @@ int MainCavoGUI::init(){
     stackedWidget = new QStackedWidget;
     stackedWidget->addWidget(channel3MaxSlider);
     channelLayout->addWidget(stackedWidget);
+    connect(channel3MaxSlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleChannel3Max);
 
     // --- ROW 1, 1
 
@@ -285,28 +284,6 @@ void MainCavoGUI::addMatToWidget(MatRender *render, cv::Mat image, double percen
     }
 }
 
-void MainCavoGUI::handleKernelButton(){
-    try {
-        // chromaRenderController->op
-        // int size = kernelSizeBox->value();
-        // chromaRenderController->setKernelSize(size);
-    }catch (int e) {
-        if (e == 20) {
-            QMessageBox messageBox;
-            messageBox.critical(0,"Error", "Seleccione una imagen");
-            messageBox.setFixedSize(500,200);
-        } else {
-            QMessageBox messageBox;
-            messageBox.critical(0,"Error", "El valor del Kernel tiene que ser impar y mayor a cero");
-            messageBox.setFixedSize(500,200);
-        }
-    }catch (exception&){
-        QMessageBox messageBox;
-        messageBox.critical(0,"Error", "Error al procesar la imagen");
-        messageBox.setFixedSize(500,200);
-    }
-}
-
 void MainCavoGUI::handleVideoChooserButton(){
     videoPath->setText(QFileDialog::getOpenFileName(this,
         tr("Seleccione un Video"), "../", tr("Video Files (*.mp4 *.mkv)")));
@@ -364,30 +341,12 @@ void MainCavoGUI::readCameraAndRender(){
         try {
             if(camera->nextFrame(true)){
                 cameraShow = camera->getFrame().clone();
-                chromaRenderController->applyColorSpace(cameraShow, FRAME_TO_RGB);
+                cameraShow = chromaRenderController->applyColorSpace(cameraShow, FRAME_TO_RGB);
                 if (firstFrame) {
                     camera->width = cameraShow.cols;
                     camera->height = cameraShow.rows;
                     firstFrame = false;
                 }
-                // if (video != NULL && runningVideo) {
-                //     if (video->nextFrame()) {
-                //         setChannelValues();
-                //         setKernelValues();
-                //         chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB);
-
-                //         chromaRenderController->applyMorphologicalOperation(camera->getFrame());
-                //         chromaRenderController->merge();
-                //         addMatToWidget(chromaRenderController, chromaRenderController->getResult(), 0.6);
-                //         addMatToWidget(cameraThresholdRender, chromaRenderController->getCameraThreshold(), 0.6);
-                //         addMatToWidget(cameraThresholdNRender, chromaRenderController->getCameraThresholdN(), 0.6);
-                //         addMatToWidget(videoFusionBackgroundRender, chromaRenderController->getVideoFusionBackground(), 0.6);
-                //         addMatToWidget(videoRender, video->getFrame());
-                //         this->update();
-                //     } else {
-                //         loadVideo(pathToVideo);
-                //     }
-                // }
 
                 // std::lock_guard<std::mutex> guard(frame_mutex);
                 addMatToWidget(cameraRender, cameraShow);
@@ -433,7 +392,7 @@ void MainCavoGUI::startProcessConverter(){
                     if (video->nextFrame()) {
                             setChannelValues();
                             setKernelValues();
-                            chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB);
+                            video->setFrame(chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB));
 
                             chromaRenderController->applyMorphologicalOperation(camera->getFrame());
                             chromaRenderController->merge();
@@ -442,7 +401,7 @@ void MainCavoGUI::startProcessConverter(){
                             addMatToWidget(cameraThresholdNRender, chromaRenderController->getCameraThresholdN(), 0.6);
                             addMatToWidget(videoFusionBackgroundRender, chromaRenderController->getVideoFusionBackground(), 0.6);
                             addMatToWidget(videoRender, video->getFrame());
-                            this->update();
+                            QCoreApplication::processEvents( );
                     } else {
                         loadVideo(pathToVideo);
                     }
@@ -472,16 +431,9 @@ void MainCavoGUI::mergeVideoCamera(){
 }
 
 void MainCavoGUI::setChannelValues(){
-    int c1Min = channel1MinSlider->getValue();
-    int c2Min = channel2MinSlider->getValue();
-    int c3Min = channel3MinSlider->getValue();
 
-    int c1Max = channel1MaxSlider->getValue();
-    int c2Max = channel2MaxSlider->getValue();
-    int c3Max = channel3MaxSlider->getValue();
-
-    chromaRenderController->setMinimunChannelValues(c1Min, c2Min, c3Min);
-    chromaRenderController->setMaximunChannelValues(c1Max, c2Max, c3Max);
+    chromaRenderController->setMinimunChannelValues(channel1Min, channel2Min, channel3Min);
+    chromaRenderController->setMaximunChannelValues(channel1Max, channel2Max, channel3Max);
 
     chromaRenderController->setThreshhold(cannySlider->getValue());   
 }
@@ -681,4 +633,28 @@ void MainCavoGUI::startProcess(){
     thread_pool.push_back(std::thread(&MainCavoGUI::readCameraAndRender, this));
     thread_pool.push_back(std::thread(&MainCavoGUI::startProcessConverter, this));
     
+}
+
+void MainCavoGUI::handleChannel1Min(int value){
+    channel1Min = value;
+}
+
+void MainCavoGUI::handleChannel2Min(int value){
+    channel2Min = value;
+}
+
+void MainCavoGUI::handleChannel3Min(int value){
+    channel3Min = value;
+}
+
+void MainCavoGUI::handleChannel1Max(int value){
+    channel1Max = value;
+}
+
+void MainCavoGUI::handleChannel2Max(int value){
+    channel2Max = value;
+}
+
+void MainCavoGUI::handleChannel3Max(int value){
+    channel3Max = value;
 }

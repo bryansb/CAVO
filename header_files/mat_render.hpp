@@ -5,6 +5,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QImage>
+#include <QCoreApplication>
+#include <QtTest/QtTest>
 
 class MatRender : public QWidget{
     private:

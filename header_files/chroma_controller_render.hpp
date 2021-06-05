@@ -1,5 +1,5 @@
 #include "camera.hpp"
-#include "mat-render.hpp"
+#include "mat_render.hpp"
 
 #include "morphological_operation.hpp"
 
@@ -76,10 +76,10 @@ class ChromaRenderController : public MatRender {
         void setCamera(Camera *camera);
 
         // Apply transform
-        void applyColorSpace(cv::Mat, int color);
-        void applyFilter(cv::Mat);
-        void applyEdgeDetector(cv::Mat);
-        void applyMorphologicalOperation(cv::Mat);
+        cv::Mat applyColorSpace(cv::Mat, int color);
+        cv::Mat applyFilter(cv::Mat);
+        cv::Mat applyEdgeDetector(cv::Mat);
+        cv::Mat applyMorphologicalOperation(cv::Mat);
 
         void setColorSpace(int);
         void setFilter(int);
@@ -93,6 +93,14 @@ class ChromaRenderController : public MatRender {
         void setMOpKernelSize(int mOpKernelSize);
 
         void setThreshhold(int threshhold);
+
+        void setChannel1Min(int);
+        void setChannel2Min(int);
+        void setChannel3Min(int);
+
+        void setChannel1Max(int);
+        void setChannel2Max(int);
+        void setChannel3Max(int);
 
         cv::Mat getCameraThreshold();
         cv::Mat getVideoFusionBackground();

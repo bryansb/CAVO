@@ -1,4 +1,4 @@
-#include "../../../../../header_files/mat-render.hpp"
+#include "../../../../../header_files/mat_render.hpp"
 
 MatRender::MatRender(string title, int w, QWidget *parent)
     :QWidget(parent){
@@ -24,8 +24,7 @@ void MatRender::render(cv::Mat img, double percent){
         qimage = QImage((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
         
         frameLabel->setPixmap(QPixmap::fromImage(qimage.copy()));
-        // frameLabel->adjustSize();
-        frameLabel->update();
+        frameLabel->update( );
     }
 }
 

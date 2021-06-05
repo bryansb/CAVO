@@ -14,8 +14,8 @@ void ChromaRenderController::merge(){
     cameraOriginal = camera->getFrame().clone();
     cameraFiltered = cameraOriginal.clone();
     
-    applyColorSpace(cameraOriginal, FRAME_TO_RGB);
-    applyColorSpace(cameraFiltered, colorSpace);
+    cameraOriginal = applyColorSpace(cameraOriginal, FRAME_TO_RGB);
+    cameraFiltered = applyColorSpace(cameraFiltered, colorSpace);
 
     
     
@@ -30,11 +30,11 @@ void ChromaRenderController::merge(){
     //----
 
     cameraThreshold = makeBinaryThresholding(cameraFiltered);
-    applyFilter(cameraThreshold);
+    cameraThreshold = applyFilter(cameraThreshold);
     Mat edge = cameraThreshold.clone();
-    applyEdgeDetector(edge);
+    edge = applyEdgeDetector(edge);
     cameraThreshold += edge;
-    applyMorphologicalOperation(cameraThreshold);
+    cameraThreshold = applyMorphologicalOperation(cameraThreshold);
 
 
     //----
@@ -181,7 +181,7 @@ void ChromaRenderController::applyChromaEffect(cv::Mat camera, cv::Mat video, cv
     output = camera + video;
 }
 
-void ChromaRenderController::applyColorSpace(cv::Mat frame, int colorSpace){
+cv::Mat ChromaRenderController::applyColorSpace(cv::Mat frame, int colorSpace){
     switch (colorSpace) {
     case FRAME_TO_RGB:
         frame = applyRGB(frame);
@@ -201,9 +201,10 @@ void ChromaRenderController::applyColorSpace(cv::Mat frame, int colorSpace){
     default:
         break;
     }
+    return frame;
 }
 
-void ChromaRenderController::applyFilter(cv::Mat frame){
+cv::Mat ChromaRenderController::applyFilter(cv::Mat frame){
     switch (filter) {
     case FRAME_TO_MEDBLUR:
         frame = applyMedianBlur(frame);
@@ -214,9 +215,10 @@ void ChromaRenderController::applyFilter(cv::Mat frame){
     default:
         break;
     }
+    return frame;
 }
 
-void ChromaRenderController::applyEdgeDetector(cv::Mat frame){
+cv::Mat ChromaRenderController::applyEdgeDetector(cv::Mat frame){
     switch (edgeDetector) {
     case FRAME_TO_CANNY:
         frame = applyCanny(frame);
@@ -230,10 +232,10 @@ void ChromaRenderController::applyEdgeDetector(cv::Mat frame){
     default:
         break;
     }
+    return frame;
 }
 
-void ChromaRenderController::applyMorphologicalOperation(cv::Mat frame){
-    // cout << morphologicalOperation << endl;
+cv::Mat ChromaRenderController::applyMorphologicalOperation(cv::Mat frame){
     switch (morphologicalOperation) {
     case FRAME_TO_DILATATION:
         frame = mo.applyDilatation(frame);
@@ -259,6 +261,7 @@ void ChromaRenderController::applyMorphologicalOperation(cv::Mat frame){
     default:
         break;
     }
+    return frame;
 }
 
 cv::Mat ChromaRenderController::getResult(){
@@ -316,6 +319,30 @@ void ChromaRenderController::setMaximunChannelValues(int channel1Max, int channe
 
 void ChromaRenderController::setThreshhold(int threshhold){
     this->threshhold = threshhold;
+}
+
+void ChromaRenderController::setChannel1Min(int value) {
+    this->channel1Min = value;
+}
+
+void ChromaRenderController::setChannel2Min(int value) {
+    this->channel2Min = value;
+}
+
+void ChromaRenderController::setChannel3Min(int value) {
+    this->channel3Min = value;
+}
+
+void ChromaRenderController::setChannel1Max(int value) {
+    this->channel1Max = value;
+}
+
+void ChromaRenderController::setChannel2Max(int value) {
+    this->channel2Max = value;
+}
+
+void ChromaRenderController::setChannel3Max(int value) {
+    this->channel3Max = value;
 }
 
 cv::Mat ChromaRenderController::getCameraThreshold(){

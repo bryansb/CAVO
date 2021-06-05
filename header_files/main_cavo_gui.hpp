@@ -1,6 +1,6 @@
 #include <chrono>
 
-#include "slider-group.hpp"
+#include "slider_group.hpp"
 
 #include "chroma_controller_render.hpp"
 
@@ -40,6 +40,14 @@ class MainCavoGUI : public QMainWindow {
         void handleFilter(int);
         void handleEdgeDetector(int);
         void handleMorphologicOperation(int);
+
+        void handleChannel1Min(int);
+        void handleChannel2Min(int);
+        void handleChannel3Min(int);
+
+        void handleChannel1Max(int);
+        void handleChannel2Max(int);
+        void handleChannel3Max(int);
     
     private:
         const int NS_PER_SECOND = 1000000000;
@@ -93,6 +101,14 @@ class MainCavoGUI : public QMainWindow {
         QSpinBox *filterKernelSizeBox;
         QSpinBox *edgeKernelSizeBox;
         QSpinBox *mOpKernelSizeBox;
+
+        int channel1Min = 0;
+        int channel2Min = 0;
+        int channel3Min = 0;
+
+        int channel1Max = 255;
+        int channel2Max = 255;
+        int channel3Max = 255;
 
         const string APP_NAME = "C.A.V.O.";
         bool running = false;

@@ -1,4 +1,4 @@
-#include "../../../../../header_files/main-cavo-gui.hpp"
+#include "../../../../../header_files/main_cavo_gui.hpp"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

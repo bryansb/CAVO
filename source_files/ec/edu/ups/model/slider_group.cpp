@@ -1,5 +1,5 @@
 
-#include "../../../../../header_files/slider-group.hpp"
+#include "../../../../../header_files/slider_group.hpp"
 
 SliderGroup::SliderGroup(Qt::Orientation orientation, QString title,
                            QWidget *parent) 
@@ -53,4 +53,8 @@ void SliderGroup::setTitleToBox(string title) {
 
 int SliderGroup::getValue() {
     return dial->value();
+}
+
+QDial * SliderGroup::getDial(){
+    return dial;
 }

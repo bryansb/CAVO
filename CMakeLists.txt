@@ -33,10 +33,10 @@ add_executable(${PROJECT_NAME}
   "source_files/ec/edu/ups/controller/morphological_operation.cpp"
   "source_files/ec/edu/ups/model/frame.cpp"
   "source_files/ec/edu/ups/model/camera.cpp"
-  "source_files/ec/edu/ups/model/mat-render.cpp"
+  "source_files/ec/edu/ups/model/mat_render.cpp"
   "source_files/ec/edu/ups/view/main.cpp"
-  "source_files/ec/edu/ups/model/slider-group.cpp"
-  "source_files/ec/edu/ups/view/main-cavo-gui.cpp"
+  "source_files/ec/edu/ups/model/slider_group.cpp"
+  "source_files/ec/edu/ups/view/main_cavo_gui.cpp"
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_LIST}

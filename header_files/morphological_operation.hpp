@@ -8,7 +8,7 @@ class MorphologicalOperation {
     public:
         MorphologicalOperation(int = 3, int = 3);
         
-        cv::Mat applyErosion(cv::Mat &);
+        cv::Mat applyErosion(cv::Mat);
         cv::Mat applyDilatation(cv::Mat);
         cv::Mat applyOpen(cv::Mat);
         cv::Mat applyClose(cv::Mat);

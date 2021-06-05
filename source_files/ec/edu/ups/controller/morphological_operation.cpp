@@ -4,7 +4,7 @@ MorphologicalOperation::MorphologicalOperation(int width, int height){
     this->kernel = cv::getStructuringElement(MORPH_CROSS, Size(width, height));
 }
 
-cv::Mat MorphologicalOperation::applyErosion(cv::Mat & image){
+cv::Mat MorphologicalOperation::applyErosion(cv::Mat image){
     Mat result;
     cv::morphologyEx(image, result, MORPH_ERODE, kernel);
     return result;
