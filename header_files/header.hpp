@@ -146,13 +146,19 @@ class MergeFrameRender : public MatRender {
         Frame *video;
         Camera *camera;
         
+        cv::Mat cameraOriginal;
         cv::Mat cameraFiltered;
+        cv::Mat videoFusionBackground;
         cv::Mat cameraThreshold;
         cv::Mat cameraThresholdN;
         cv::Mat result;
         cv::Mat videoRS;
 
-        int kernelSize = 3;
+        int filterKernelSize = 3;
+        int edgeKernelSize = 3;
+        int mOpKernelSize = 3;
+
+        int threshhold = 70;
 
         int channel1Min;
         int channel2Min;
@@ -172,11 +178,11 @@ class MergeFrameRender : public MatRender {
         std::mutex frame_mutex;
         
         // Color space
-        void applyRGB(cv::Mat frame);
-        void applyHSV(cv::Mat frame);
-        void applyBGR(cv::Mat frame);
-        void applyYCbCr(cv::Mat frame);
-        void applyLab(cv::Mat frame);
+        cv::Mat applyRGB(cv::Mat frame);
+        cv::Mat applyHSV(cv::Mat frame);
+        cv::Mat applyBGR(cv::Mat frame);
+        cv::Mat applyYCbCr(cv::Mat frame);
+        cv::Mat applyLab(cv::Mat frame);
 
         // Filter
         cv::Mat applyMedianBlur(cv::Mat frame);
@@ -208,9 +214,9 @@ class MergeFrameRender : public MatRender {
 
         // Apply transform
         void applyColorSpace(cv::Mat, int color);
-        void applyFilter(cv::Mat &);
-        void applyEdgeDetector(cv::Mat &);
-        void applyMorphologicalOperation(cv::Mat & );
+        void applyFilter(cv::Mat);
+        void applyEdgeDetector(cv::Mat);
+        void applyMorphologicalOperation(cv::Mat);
 
         void setColorSpace(int);
         void setFilter(int);
@@ -219,7 +225,15 @@ class MergeFrameRender : public MatRender {
         void setMinimunChannelValues(int, int, int);
         void setMaximunChannelValues(int, int, int);
 
-        void setKernelSize(int);
+        void setFilterKernelSize(int filterKernelSize);
+        void setEdgeKernelSize(int edgeKernelSize);
+        void setMOpKernelSize(int mOpKernelSize);
+
+        void setThreshhold(int threshhold);
+
+        cv::Mat getCameraThreshold();
+        cv::Mat getVideoFusionBackground();
+        cv::Mat getCameraThresholdN();
 };
 
 class MainImageGUI : public QMainWindow {
@@ -239,19 +253,24 @@ class MainImageGUI : public QMainWindow {
     
     private:
         const int NS_PER_SECOND = 1000000000;
-        const int UPS_OBJECT = 20;
+        const int UPS_OBJECT = 22;
         const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
 
         bool runningVideo = false;
         string pathToVideo;
 
         std::mutex frame_mutex;
-        std::condition_variable cvariable;
+        // std::condition_variable cvariable;
 
         Camera *camera;
         Frame *video;
         MatRender *cameraRender;
         MatRender *videoRender;
+
+        MatRender *videoFusionBackgroundRender;
+        MatRender *cameraThresholdRender;
+        MatRender *cameraThresholdNRender;
+
         MergeFrameRender *mergeFrameRender;
 
         std::vector<std::thread > thread_pool;
@@ -275,18 +294,22 @@ class MainImageGUI : public QMainWindow {
         SliderGroup *channel2MaxSlider;
         SliderGroup *channel3MaxSlider;
 
-        QComboBox * colorSpaceCbox;
-        QComboBox * filterCbox;
-        QComboBox * morphologicalOperationCbox;
-        QComboBox * edgeDetectorCbox;
+        SliderGroup *cannySlider;
 
-        QSpinBox * kernelSizeBox;
+        QComboBox *colorSpaceCbox;
+        QComboBox *filterCbox;
+        QComboBox *morphologicalOperationCbox;
+        QComboBox *edgeDetectorCbox;
+
+        QSpinBox *filterKernelSizeBox;
+        QSpinBox *edgeKernelSizeBox;
+        QSpinBox *mOpKernelSizeBox;
 
         const string APP_NAME = "CAVO";
         bool running = false;
         void startProcessConverter();
         double getTimeInMilliseconds();
-        void loadVideo();
+        void loadVideo(string);
         void readCameraAndRender();
         long nanoTime();
 
@@ -294,12 +317,15 @@ class MainImageGUI : public QMainWindow {
 
         void setChannelValues();
 
-        void changeChannelValues(int min, int max, string title, SliderGroup * slider);
+        void changeChannelValues(int min, int max, string title, SliderGroup * slider, bool isMax = false);
 
         void changeColorSpace();
         void changeFilter();
         void changeEdgeDetector();
         void changeMorpOperation();
+
+        void setKernelValues();
+        void showCannySlider(int index);
         
         void stopProcess();
     public:

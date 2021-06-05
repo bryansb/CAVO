@@ -15,12 +15,17 @@ MatRender::MatRender(string title, int w, QWidget *parent)
 void MatRender::render(cv::Mat img, double percent){
     Mat image = img.clone();
     if (image.cols != 0 && image.rows != 0) {
+        if (image.channels() == 1) {
+            cv::cvtColor(image, image, cv::COLOR_GRAY2RGB);
+        }
         ws = ((double)w * percent);
         hs = (ws / image.cols) * image.rows;
         cv::resize(image, image, Size(abs(ws), abs(hs)));
         qimage = QImage((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
         
         frameLabel->setPixmap(QPixmap::fromImage(qimage.copy()));
+        // frameLabel->adjustSize();
+        frameLabel->update();
     }
 }
 

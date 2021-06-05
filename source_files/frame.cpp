@@ -15,7 +15,6 @@ bool Frame::nextFrame(bool flip, int orientation){
     this->read(frame);
     if (flip)
         flipFrame(frame, orientation);
-    std::lock_guard<std::mutex> guard(frame_mutex);
     setFrame(frame);
     return frame.empty() ? false : true;
 }
@@ -30,5 +29,6 @@ cv::Mat Frame::getFrame(){
 }
 
 void Frame::setFrame(cv::Mat f){
+    std::lock_guard<std::mutex> guard(frame_mutex);
     this->frame = f;
 }
