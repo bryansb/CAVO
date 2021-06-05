@@ -1,10 +1,8 @@
-#include "../../../../../header_files/header.hpp"
+#include "../../../../../header_files/main-cavo-gui.hpp"
 
-MainImageGUI::MainImageGUI(){
-    
-}
+MainCavoGUI::MainCavoGUI(){}
 
-int MainImageGUI::init(){
+int MainCavoGUI::init(){
     this->setFixedSize(1500, 900);
     // setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
     this->setWindowTitle(QString::fromStdString(APP_NAME));
@@ -31,7 +29,7 @@ int MainImageGUI::init(){
     videoChooserLayout->addWidget(videoPath);
     
     imageChooserButton = new QPushButton("Seleccionar Video", imageChooserWidget);
-    connect(imageChooserButton, &QPushButton::released,this, &MainImageGUI::handleVideoChooserButton);
+    connect(imageChooserButton, &QPushButton::released,this, &MainCavoGUI::handleVideoChooserButton);
     videoChooserLayout->addWidget(imageChooserButton);
 
     // --- ROW 1, 0
@@ -65,7 +63,7 @@ int MainImageGUI::init(){
     colorSpaceLayout->addWidget(new QLabel("Espacios de Color:"));
     colorSpaceLayout->addWidget(colorSpaceCbox);
     connect(colorSpaceCbox, QOverload<int>::of(&QComboBox::activated),
-            this, &MainImageGUI::handleSpaceColor);
+            this, &MainCavoGUI::handleSpaceColor);
     
     QWidget * allChannelWidget = new QWidget(channelBox);
     colorSpaceLayout->addWidget(allChannelWidget);
@@ -163,7 +161,7 @@ int MainImageGUI::init(){
     filterCbox->addItems({"Ninguno", "Median Blur", "Gaussian Blur"});
     filterLayout->addWidget(filterCbox);
     connect(filterCbox, QOverload<int>::of(&QComboBox::activated),
-            this, &MainImageGUI::handleFilter);
+            this, &MainCavoGUI::handleFilter);
 
     //-------
 
@@ -194,7 +192,7 @@ int MainImageGUI::init(){
     edgeDetectorCbox->addItems({"Ninguno", "Canny", "Sobel", "Laplacian"});
     filterLayout->addWidget(edgeDetectorCbox);
     connect(edgeDetectorCbox, QOverload<int>::of(&QComboBox::activated),
-            this, &MainImageGUI::handleEdgeDetector);
+            this, &MainCavoGUI::handleEdgeDetector);
 
     filterWidget = new QWidget(allFilterBox);
     allFilterLayout->addWidget(filterWidget);
@@ -215,7 +213,7 @@ int MainImageGUI::init(){
     morphologicalOperationCbox->addItems({"Ninguno", "Dilatación", "Erosión", "Abierto", "Cerrado", "Black Hat", "Top Hat", "Ecuación"});
     filterLayout->addWidget(morphologicalOperationCbox);
     connect(morphologicalOperationCbox, QOverload<int>::of(&QComboBox::activated),
-            this, &MainImageGUI::handleMorphologicOperation);
+            this, &MainCavoGUI::handleMorphologicOperation);
 
     // --- ROW 2, 1
 
@@ -270,7 +268,7 @@ int MainImageGUI::init(){
     return 0;
 }
 
-void MainImageGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent){
+void MainCavoGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent){
     try {
         
         // std::lock_guard<std::mutex> guard(frame_mutex);
@@ -287,7 +285,7 @@ void MainImageGUI::addMatToWidget(MatRender *render, cv::Mat image, double perce
     }
 }
 
-void MainImageGUI::handleKernelButton(){
+void MainCavoGUI::handleKernelButton(){
     try {
         // chromaRenderController->op
         // int size = kernelSizeBox->value();
@@ -309,13 +307,13 @@ void MainImageGUI::handleKernelButton(){
     }
 }
 
-void MainImageGUI::handleVideoChooserButton(){
+void MainCavoGUI::handleVideoChooserButton(){
     videoPath->setText(QFileDialog::getOpenFileName(this,
         tr("Seleccione un Video"), "../", tr("Video Files (*.mp4 *.mkv)")));
     loadVideo(videoPath->text().toStdString());
 }
 
-void MainImageGUI::loadVideo(string path){
+void MainCavoGUI::loadVideo(string path){
     runningVideo = false;
     if (!path.empty()) {
         delete video;
@@ -327,7 +325,7 @@ void MainImageGUI::loadVideo(string path){
     runningVideo = true;
 }
 
-void MainImageGUI::clearLayout(QLayout *layout) {
+void MainCavoGUI::clearLayout(QLayout *layout) {
     QLayoutItem *child;
     while (layout->count() != 0) {
         child = layout->takeAt ( 0 );
@@ -340,7 +338,7 @@ void MainImageGUI::clearLayout(QLayout *layout) {
     }
 }
 
-void MainImageGUI::closeEvent (QCloseEvent *event){
+void MainCavoGUI::closeEvent (QCloseEvent *event){
     QMessageBox::StandardButton resBtn = QMessageBox::question( this, QString::fromStdString(APP_NAME),
                                                                 tr("¿Está seguro?\n"),
                                                                 QMessageBox::No | QMessageBox::Yes,
@@ -353,7 +351,7 @@ void MainImageGUI::closeEvent (QCloseEvent *event){
     }
 }
 
-void MainImageGUI::readCameraAndRender(){
+void MainCavoGUI::readCameraAndRender(){
     camera = new Camera(0);
     chromaRenderController->setCamera(camera);
 
@@ -401,14 +399,14 @@ void MainImageGUI::readCameraAndRender(){
     }
 }
 
-long MainImageGUI::nanoTime(){
+long MainCavoGUI::nanoTime(){
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch(); 
     return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
 
 }
 
-void MainImageGUI::startProcessConverter(){
+void MainCavoGUI::startProcessConverter(){
 
     int aps = 0;
     int fps = 0;
@@ -468,12 +466,12 @@ void MainImageGUI::startProcessConverter(){
 
 }
 
-void MainImageGUI::mergeVideoCamera(){
+void MainCavoGUI::mergeVideoCamera(){
     chromaRenderController->setTitle("Croma Aplicado");
     chromaRenderController->setVideo(video);
 }
 
-void MainImageGUI::setChannelValues(){
+void MainCavoGUI::setChannelValues(){
     int c1Min = channel1MinSlider->getValue();
     int c2Min = channel2MinSlider->getValue();
     int c3Min = channel3MinSlider->getValue();
@@ -489,7 +487,7 @@ void MainImageGUI::setChannelValues(){
 }
 
 // HANDLE
-void MainImageGUI::handleSpaceColor(int i){
+void MainCavoGUI::handleSpaceColor(int i){
     // "RGB", "HSV", "BGR", "YCbCr", "Lab"
     switch (i) {
     case 0:
@@ -545,14 +543,14 @@ void MainImageGUI::handleSpaceColor(int i){
     changeColorSpace();
 }
 
-void MainImageGUI::changeChannelValues(int min, int max, string title, SliderGroup * slider, bool isMax){
+void MainCavoGUI::changeChannelValues(int min, int max, string title, SliderGroup * slider, bool isMax){
     slider->setValue(isMax ? max : min);
     slider->setMinimum(min);
     slider->setMaximum(max);
     slider->setTitleToBox(title);
 }
 
-void MainImageGUI::changeColorSpace(){
+void MainCavoGUI::changeColorSpace(){
     // "RGB", "HSV", "BGR", "YCbCr", "Lab"
     int i = colorSpaceCbox->currentIndex();
 
@@ -579,7 +577,7 @@ void MainImageGUI::changeColorSpace(){
     }
 }
 
-void MainImageGUI::handleFilter(int i){
+void MainCavoGUI::handleFilter(int i){
     // "Median Blur", "Gaussian Blur"
     // int i = colorSpaceCbox->currentIndex();
     switch (i) {
@@ -598,7 +596,7 @@ void MainImageGUI::handleFilter(int i){
     }
 }
 
-void MainImageGUI::handleEdgeDetector(int i){
+void MainCavoGUI::handleEdgeDetector(int i){
     // "Canny", "Sobel", "Laplacian"
     // int i = colorSpaceCbox->currentIndex();
     showCannySlider(i - 1);
@@ -621,7 +619,7 @@ void MainImageGUI::handleEdgeDetector(int i){
     }
 }
 
-void MainImageGUI::handleMorphologicOperation(int i){
+void MainCavoGUI::handleMorphologicOperation(int i){
     // "Dilatación", "Erosión", "Abierto", "Cerrado", "Black Hat", "Top Hat
 
     switch (i) {
@@ -656,13 +654,13 @@ void MainImageGUI::handleMorphologicOperation(int i){
     }
 }
 
-void MainImageGUI::setKernelValues() {
+void MainCavoGUI::setKernelValues() {
     chromaRenderController->setFilterKernelSize(filterKernelSizeBox->value());
     chromaRenderController->setEdgeKernelSize(edgeKernelSizeBox->value());
     chromaRenderController->setMOpKernelSize(mOpKernelSizeBox->value());
 }
 
-void MainImageGUI::showCannySlider(int index) {
+void MainCavoGUI::showCannySlider(int index) {
     if (index == FRAME_TO_CANNY) {
         cannySlider->setVisible(true);
     } else {
@@ -670,17 +668,17 @@ void MainImageGUI::showCannySlider(int index) {
     }
 }
 
-void MainImageGUI::stopProcess(){
+void MainCavoGUI::stopProcess(){
     running = false;
     for (int i = 0; i < thread_pool.size(); i++){
         thread_pool[i].join();
     }
 }
 
-void MainImageGUI::startProcess(){
+void MainCavoGUI::startProcess(){
     thread_pool.clear();
     running = true;
-    thread_pool.push_back(std::thread(&MainImageGUI::readCameraAndRender, this));
-    thread_pool.push_back(std::thread(&MainImageGUI::startProcessConverter, this));
+    thread_pool.push_back(std::thread(&MainCavoGUI::readCameraAndRender, this));
+    thread_pool.push_back(std::thread(&MainCavoGUI::startProcessConverter, this));
     
 }

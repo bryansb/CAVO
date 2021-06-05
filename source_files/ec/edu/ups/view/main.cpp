@@ -1,10 +1,10 @@
-#include "../../../../../header_files/header.hpp"
+#include "../../../../../header_files/main-cavo-gui.hpp"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     
-    MainImageGUI migui;
-    migui.init();
+    MainCavoGUI cavo;
+    cavo.init();
     
     return app.exec();
 }

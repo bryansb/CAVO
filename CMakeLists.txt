@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(cavo VERSION 0.1.0)
+project(CAVO VERSION 0.1.0)
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "../bin")
 add_compile_definitions(
@@ -12,18 +12,34 @@ enable_testing()
 find_package( OpenCV REQUIRED )
 find_package( Threads REQUIRED )
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-add_executable(cavo 
-    
-    "source_files/ec/edu/ups/controller/morphological-operation.cpp"
-    "source_files/ec/edu/ups/model/frame.cpp"
-    "source_files/ec/edu/ups/model/camera.cpp"
-    "source_files/ec/edu/ups/model/mat-render.cpp"
-    "source_files/ec/edu/ups/controller/merge-frame-render.cpp"
-    "source_files/ec/edu/ups/view/main.cpp"
-    "source_files/ec/edu/ups/model/slider-group.cpp"
-    "source_files/ec/edu/ups/view/main-image-gui.cpp"
+set(INCLUDE_LIST 
+  "header_files/ec/edu/ups/model"
+  "header_files/ec/edu/ups/controller"
+  "header_files/ec/edu/ups/view"
+  "header_files/ec/edu/ups"
+)
+
+include_directories( ${OpenCV_INCLUDE_DIRS} ${INCLUDE_LIST})
+
+# IF (WIN32)
+#   add_compile_definitions(CH_PLATFORM_WINDOWS)
+# ELSE()
+#   # set stuff for other systems
+# ENDIF()
+
+add_executable(${PROJECT_NAME}
+  "source_files/ec/edu/ups/controller/chroma_controller_render.cpp"
+  "source_files/ec/edu/ups/controller/morphological_operation.cpp"
+  "source_files/ec/edu/ups/model/frame.cpp"
+  "source_files/ec/edu/ups/model/camera.cpp"
+  "source_files/ec/edu/ups/model/mat-render.cpp"
+  "source_files/ec/edu/ups/view/main.cpp"
+  "source_files/ec/edu/ups/model/slider-group.cpp"
+  "source_files/ec/edu/ups/view/main-cavo-gui.cpp"
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_LIST}
 )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})

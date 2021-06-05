@@ -1,3 +1,3 @@
-#include "../../../../../header_files/header.hpp"
+#include "../../../../../header_files/camera.hpp"
 
 Camera::Camera(int camNum) : Frame(camNum){}

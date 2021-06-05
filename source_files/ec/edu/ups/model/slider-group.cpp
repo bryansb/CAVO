@@ -1,6 +1,5 @@
+
 #include "../../../../../header_files/slider-group.hpp"
-#include <iostream>
-using namespace std;
 
 SliderGroup::SliderGroup(Qt::Orientation orientation, QString title,
                            QWidget *parent) 

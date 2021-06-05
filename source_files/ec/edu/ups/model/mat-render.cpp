@@ -1,4 +1,4 @@
-#include "../../../../../header_files/header.hpp"
+#include "../../../../../header_files/mat-render.hpp"
 
 MatRender::MatRender(string title, int w, QWidget *parent)
     :QWidget(parent){

@@ -1,4 +1,4 @@
-#include "../../../../../header_files/header.hpp"
+#include "../../../../../header_files/chroma_controller_render.hpp"
 
 ChromaRenderController::ChromaRenderController(string title, int w, QWidget *parent) 
     : MatRender(title, w, parent) {}
