@@ -143,6 +143,8 @@ int MainImageGUI::init(){
     filterCbox = new QComboBox(filterWidget);
     filterCbox->addItems({"Ninguno", "Median Blur", "Gaussian Blur"});
     filterLayout->addWidget(filterCbox);
+    connect(filterCbox, QOverload<int>::of(&QComboBox::activated),
+            this, &MainImageGUI::handleFilter);
 
     filterWidget = new QWidget(allFilterBox);
     allFilterLayout->addWidget(filterWidget);
@@ -152,6 +154,8 @@ int MainImageGUI::init(){
     edgeDetectorCbox = new QComboBox(filterWidget);
     edgeDetectorCbox->addItems({"Ninguno", "Canny", "Sobel", "Laplacian"});
     filterLayout->addWidget(edgeDetectorCbox);
+    connect(edgeDetectorCbox, QOverload<int>::of(&QComboBox::activated),
+            this, &MainImageGUI::handleEdgeDetector);
 
     filterWidget = new QWidget(allFilterBox);
     allFilterLayout->addWidget(filterWidget);
@@ -289,7 +293,7 @@ void MainImageGUI::closeEvent (QCloseEvent *event){
 }
 
 void MainImageGUI::readCameraAndRender(){
-    camera = new Camera();
+    camera = new Camera(1);
     mergeFrameRender->setCamera(camera);
 
     bool firstFrame = true;
@@ -338,14 +342,6 @@ void MainImageGUI::startProcessConverter(){
 
     long loopStart;
 
-    int channel1Min = 0;
-    int channel2Min;
-    int channel3Min;
-
-    int channel1Max;
-    int channel2Max;
-    int channel3Max;
-
     while(running){
         loopStart = nanoTime();
         timeElapsed = loopStart - updateReference;
@@ -357,8 +353,7 @@ void MainImageGUI::startProcessConverter(){
             try {
                 if (video != NULL && runningVideo) {
                     if (video->nextFrame()) {
-                            channelValues(channel1Min, channel2Min, channel3Min, 
-                                channel1Max, channel2Max, channel3Max);
+                            setChannelValues();
                             mergeFrameRender->applyColorSpace(video->getFrame(), FRAME_TO_RGB);
 
                             mergeFrameRender->applyMorphologicalOperation(camera->getFrame());
@@ -389,19 +384,21 @@ void MainImageGUI::startProcessConverter(){
 }
 
 void MainImageGUI::mergeVideoCamera(){
-    mergeFrameRender->setTitle("Resta Normal");
+    mergeFrameRender->setTitle("Croma Aplicado");
     mergeFrameRender->setVideo(video);
 }
 
-void MainImageGUI::channelValues(int & c1Min, int & c2Min,int & c3Min, 
-    int & c1Max, int & c2Max, int & c3Max){
-    c1Min = channel1MinSlider->getValue();
-    c2Min = channel2MinSlider->getValue();
-    c3Min = channel3MinSlider->getValue();
+void MainImageGUI::setChannelValues(){
+    int c1Min = channel1MinSlider->getValue();
+    int c2Min = channel2MinSlider->getValue();
+    int c3Min = channel3MinSlider->getValue();
 
-    c1Max = channel1MaxSlider->getValue();
-    c2Max = channel2MaxSlider->getValue();
-    c3Max = channel3MaxSlider->getValue();
+    int c1Max = channel1MaxSlider->getValue();
+    int c2Max = channel2MaxSlider->getValue();
+    int c3Max = channel3MaxSlider->getValue();
+
+    mergeFrameRender->setMinimunChannelValues(c1Min, c2Min, c3Min);
+    mergeFrameRender->setMaximunChannelValues(c1Max, c2Max, c3Max);    
 }
 
 // HANDLE
@@ -500,6 +497,7 @@ void MainImageGUI::handleFilter(int i){
     switch (i) {
     case 0:
         mergeFrameRender->setFilter(-1);
+        break;
     case 1:
         mergeFrameRender->setFilter(FRAME_TO_MEDBLUR);
         break;
@@ -518,8 +516,10 @@ void MainImageGUI::handleEdgeDetector(int i){
     switch (i) {
     case 0:
         mergeFrameRender->setEdgeDetector(-1);
+        break;
     case 1:
         mergeFrameRender->setEdgeDetector(FRAME_TO_CANNY);
+        break;
     case 2:
         mergeFrameRender->setEdgeDetector(FRAME_TO_SOBEL);
         break;

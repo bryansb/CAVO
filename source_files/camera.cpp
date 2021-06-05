@@ -1,3 +1,3 @@
 #include "../header_files/header.hpp"
 
-Camera::Camera() : Frame(0){}
+Camera::Camera(int camNum) : Frame(camNum){}

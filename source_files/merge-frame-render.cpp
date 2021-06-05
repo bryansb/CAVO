@@ -11,15 +11,25 @@ MergeFrameRender::MergeFrameRender(Frame *video, Camera *camera, string title, i
 
 void MergeFrameRender::merge(){
     std::lock_guard<std::mutex> guard(frame_mutex);
-    cameraFiltered = camera->getFrame().clone();
+    cv::Mat cameraOriginal = camera->getFrame().clone();
+    applyColorSpace(cameraOriginal, FRAME_TO_RGB);
 
+    cameraFiltered = cameraOriginal.clone();
 
     applyColorSpace(cameraFiltered, colorSpace);
-    applyMorphologicalOperation(cameraFiltered);
+
+    cameraThreshold = makeBinaryThresholding(cameraFiltered);
+
+    applyFilter(cameraThreshold);
+    applyEdgeDetector(cameraThreshold);
+    applyMorphologicalOperation(cameraThreshold);
 
     cv::resize(video->getFrame(), videoRS, cv::Size(camera->width, camera->height));
+
+    applyChromaEffect(cameraOriginal, videoRS, cameraThreshold, result);
     // result = cv::abs(videoRS - cameraFiltered);
-    result = cameraFiltered;
+    // result = cameraFiltered;
+    // result = this->cameraThreshold;
 }
 
 // Color Space
@@ -45,24 +55,88 @@ void MergeFrameRender::applyLab(cv::Mat frame){
 }
 
 // Filter
-void MergeFrameRender::applyMedianBlur(cv::Mat frame){
-
+cv::Mat MergeFrameRender::applyMedianBlur(cv::Mat frame){
+    medianBlur(frame, frame, kernelSize);
+    return frame;
 }
 
-void MergeFrameRender::applyGaussianBlur(cv::Mat frame){
+cv::Mat MergeFrameRender::applyGaussianBlur(cv::Mat frame){
+    double sigma = 0.3 * (((double) kernelSize - 1) * 0.5 - 1) + 0.8;
+    Size kernel = Size(kernelSize, kernelSize);
 
+    GaussianBlur(frame, frame, kernel, sigma, sigma);
+    return frame;
 }
 
 // Edge detector
-void MergeFrameRender::applyCanny(cv::Mat frame){
-    // Canny(frame, edgeFrame, thres, thres*ratio, kernelCanny);
+cv::Mat MergeFrameRender::applyCanny(cv::Mat frame){
+    cv::Mat cannyEdge;
+    int thres = 10;
+    int ratio = 3;
+    int kernelCanny = kernelSize;
+
+    if (kernelCanny < 3) {
+        kernelCanny = 3;
+    } else if (kernelCanny > 7){
+        kernelCanny = 7;
+    } else {
+        kernelCanny = kernelSize;
+    }
+
+    Canny(frame.clone(), cannyEdge, thres, thres*ratio, kernelCanny);
+    return cannyEdge;
 }
 
-void MergeFrameRender::applySobel(cv::Mat frame){
+cv::Mat MergeFrameRender::applySobel(cv::Mat frame){
+    cv::Mat sobelX;
+    cv::Mat sobelY;
+    cv::Mat sobelXAbs;
+    cv::Mat sobelYAbs;
 
+    Sobel(frame, sobelX, CV_16S, 1, 0, kernelSize);
+    Sobel(frame, sobelY, CV_16S, 0, 1, kernelSize);
+    convertScaleAbs(sobelX, sobelXAbs);
+    convertScaleAbs(sobelY, sobelYAbs);
+    addWeighted(sobelXAbs, 0.5, sobelYAbs, 0.5, 0, frame);
+
+    return frame;
 }
-void MergeFrameRender::applyLaplacian(cv::Mat frame){
 
+cv::Mat MergeFrameRender::applyLaplacian(cv::Mat frame){
+    cv::Mat laplacian;
+
+    Laplacian(frame, laplacian, CV_16S, kernelSize);
+    convertScaleAbs(laplacian, frame);
+
+    return frame;
+}
+
+cv::Mat MergeFrameRender::makeBinaryThresholding(cv::Mat frame){
+    cv::Mat thresholdized;
+
+    // cv::inRange(frame, Scalar(145, 34, 0), 
+    //             Scalar(145, 255, 255), thresholdized);
+    cv::inRange(frame, Scalar(channel1Min, channel2Min, channel3Min), 
+                Scalar(channel1Max, channel2Max, channel3Max), thresholdized);
+
+    return thresholdized;
+}
+
+void MergeFrameRender::applyChromaEffect(cv::Mat camera, cv::Mat video, cv::Mat thresholdized, cv::Mat &output){
+    int pixel = 0;
+                
+    for (int row = 0; row < thresholdized.rows; row++){
+        for (int col = 0; col < thresholdized.cols; col++){
+            pixel = thresholdized.at<uchar>(row, col);
+            if (pixel != 0) {
+                camera.at<Vec3b>(row, col) = Vec3b(0,0,0);
+            } else {
+                video.at<Vec3b>(row, col) = Vec3b(0,0,0);
+            }
+        }
+    }
+
+    output = camera + video;
 }
 
 void MergeFrameRender::applyColorSpace(cv::Mat frame, int colorSpace){
@@ -82,35 +156,34 @@ void MergeFrameRender::applyColorSpace(cv::Mat frame, int colorSpace){
     case FRAME_TO_Lab:
         applyLab(frame);
         break;
-    
     default:
         break;
     }
 }
 
-void MergeFrameRender::applyFilter(cv::Mat frame){
+void MergeFrameRender::applyFilter(cv::Mat &frame){
     switch (filter) {
     case FRAME_TO_MEDBLUR:
-        applyMedianBlur(frame);
+        frame = applyMedianBlur(frame);
         break;
     case FRAME_TO_GAUBLUR:
-        applyGaussianBlur(frame);
+        frame = applyGaussianBlur(frame);
         break;
     default:
         break;
     }
 }
 
-void MergeFrameRender::applyEdgeDetector(cv::Mat frame){
+void MergeFrameRender::applyEdgeDetector(cv::Mat &frame){
     switch (edgeDetector) {
     case FRAME_TO_CANNY:
-        applyCanny(frame);
+        frame = applyCanny(frame);
         break;
     case FRAME_TO_SOBEL:
-        applySobel(frame);
+        frame = applySobel(frame);
         break;
     case FRAME_TO_LAPLACIAN:
-        applyLaplacian(frame);
+        frame = applyLaplacian(frame);
         break;
     default:
         break;
@@ -135,15 +208,12 @@ void MergeFrameRender::applyMorphologicalOperation(cv::Mat & frame){
     case FRAME_TO_BLACKHAT:
         frame = mo.applyBlackHat(frame);
         break;
-
     case FRAME_TO_TOPHAT:
         frame = mo.applyTopHat(frame);
         break;
-
     case FRAME_TO_EQUATION:
         frame = mo.applyEquation(frame);
         break;
-    
     default:
         break;
     }
@@ -180,4 +250,17 @@ void MergeFrameRender::setMorphologicalOperation(int morphologicalOperation){
 void MergeFrameRender::setKernelSize(int kernelSize){
     this->kernelSize = kernelSize;
     mo.createKernel(kernelSize);
+}
+
+void MergeFrameRender::setMinimunChannelValues(int channel1Min, int channel2Min, int channel3Min){
+    this->channel1Min = channel1Min;
+    this->channel2Min = channel2Min;
+    this->channel3Min = channel3Min;
+}
+
+
+void MergeFrameRender::setMaximunChannelValues(int channel1Max, int channel2Max, int channel3Max){
+    this->channel1Max = channel1Max;
+    this->channel2Max = channel2Max;
+    this->channel3Max = channel3Max;
 }

@@ -109,7 +109,7 @@ class Camera : public Frame {
         int width;
         int height;
 
-        Camera();
+        Camera(int);
         
 };
 
@@ -147,6 +147,8 @@ class MergeFrameRender : public MatRender {
         Camera *camera;
         
         cv::Mat cameraFiltered;
+        cv::Mat cameraThreshold;
+        cv::Mat cameraThresholdN;
         cv::Mat result;
         cv::Mat videoRS;
 
@@ -177,16 +179,22 @@ class MergeFrameRender : public MatRender {
         void applyLab(cv::Mat frame);
 
         // Filter
-        void applyMedianBlur(cv::Mat frame);
-        void applyGaussianBlur(cv::Mat frame);
+        cv::Mat applyMedianBlur(cv::Mat frame);
+        cv::Mat applyGaussianBlur(cv::Mat frame);
         
         // Edge detector
-        void applyCanny(cv::Mat frame);
-        void applySobel(cv::Mat frame);
-        void applyLaplacian(cv::Mat frame);
+        cv::Mat applyCanny(cv::Mat frame);
+        cv::Mat applySobel(cv::Mat frame);
+        cv::Mat applyLaplacian(cv::Mat frame);
 
         // Morphological Operation
         // in other class
+
+        // Threshold
+        cv::Mat makeBinaryThresholding(cv::Mat frame);
+
+        // Pixel Detection
+        void applyChromaEffect(cv::Mat camera, cv::Mat video, cv::Mat thresholdized, cv::Mat &output);
 
     public:
         MergeFrameRender(string title, int w, QWidget *parent);
@@ -200,14 +208,16 @@ class MergeFrameRender : public MatRender {
 
         // Apply transform
         void applyColorSpace(cv::Mat, int color);
-        void applyFilter(cv::Mat);
-        void applyEdgeDetector(cv::Mat);
+        void applyFilter(cv::Mat &);
+        void applyEdgeDetector(cv::Mat &);
         void applyMorphologicalOperation(cv::Mat & );
 
         void setColorSpace(int);
         void setFilter(int);
         void setEdgeDetector(int);
         void setMorphologicalOperation(int);
+        void setMinimunChannelValues(int, int, int);
+        void setMaximunChannelValues(int, int, int);
 
         void setKernelSize(int);
 };
@@ -282,7 +292,7 @@ class MainImageGUI : public QMainWindow {
 
         void mergeVideoCamera();
 
-        void channelValues(int &, int &, int &, int &, int &, int &);
+        void setChannelValues();
 
         void changeChannelValues(int min, int max, string title, SliderGroup * slider);
 
