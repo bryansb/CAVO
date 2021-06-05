@@ -1,4 +1,4 @@
-#include "../header_files/header.hpp"
+#include "../../../../../header_files/header.hpp"
 
 MorphologicalOperation::MorphologicalOperation(int width, int height){
     this->kernel = cv::getStructuringElement(MORPH_CROSS, Size(width, height));

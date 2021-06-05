@@ -115,7 +115,6 @@ class Camera : public Frame {
 
 class MatRender : public QWidget{
     private:
-        // QGroupBox *boxImage;
         QVBoxLayout *layout;
         QLabel *titleLabel;
         QLabel *frameLabel;
@@ -140,7 +139,7 @@ class MatRender : public QWidget{
         void setW(int w);
 };
 
-class MergeFrameRender : public MatRender {
+class ChromaRenderController : public MatRender {
 
     private:
         Frame *video;
@@ -203,8 +202,8 @@ class MergeFrameRender : public MatRender {
         void applyChromaEffect(cv::Mat camera, cv::Mat video, cv::Mat thresholdized, cv::Mat &output);
 
     public:
-        MergeFrameRender(string title, int w, QWidget *parent);
-        MergeFrameRender(Frame *video, Camera *camera, string title,
+        ChromaRenderController(string title, int w, QWidget *parent);
+        ChromaRenderController(Frame *video, Camera *camera, string title,
                     int w, QWidget *parent);
         void merge();
 
@@ -260,7 +259,6 @@ class MainImageGUI : public QMainWindow {
         string pathToVideo;
 
         std::mutex frame_mutex;
-        // std::condition_variable cvariable;
 
         Camera *camera;
         Frame *video;
@@ -271,7 +269,7 @@ class MainImageGUI : public QMainWindow {
         MatRender *cameraThresholdRender;
         MatRender *cameraThresholdNRender;
 
-        MergeFrameRender *mergeFrameRender;
+        ChromaRenderController *chromaRenderController;
 
         std::vector<std::thread > thread_pool;
 
@@ -305,7 +303,7 @@ class MainImageGUI : public QMainWindow {
         QSpinBox *edgeKernelSizeBox;
         QSpinBox *mOpKernelSizeBox;
 
-        const string APP_NAME = "CAVO";
+        const string APP_NAME = "C.A.V.O.";
         bool running = false;
         void startProcessConverter();
         double getTimeInMilliseconds();

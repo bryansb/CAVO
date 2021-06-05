@@ -16,14 +16,14 @@ include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_executable(cavo 
     
-    "source_files/morphological-operation.cpp"
-    "source_files/frame.cpp"
-    "source_files/camera.cpp"
-    "source_files/mat-render.cpp"
-    "source_files/merge-frame-render.cpp"
-    "source_files/main.cpp"
-    "source_files/slider-group.cpp"
-    "source_files/main-image-gui.cpp"
+    "source_files/ec/edu/ups/controller/morphological-operation.cpp"
+    "source_files/ec/edu/ups/model/frame.cpp"
+    "source_files/ec/edu/ups/model/camera.cpp"
+    "source_files/ec/edu/ups/model/mat-render.cpp"
+    "source_files/ec/edu/ups/controller/merge-frame-render.cpp"
+    "source_files/ec/edu/ups/view/main.cpp"
+    "source_files/ec/edu/ups/model/slider-group.cpp"
+    "source_files/ec/edu/ups/view/main-image-gui.cpp"
 )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
