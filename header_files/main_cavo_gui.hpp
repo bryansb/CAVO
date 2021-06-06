@@ -23,9 +23,6 @@
 #include <QComboBox>
 #include <QSpinBox>
 
-// #include "../model/camera.hpp"
-// #include "../model/mat-render.hpp"
-
 class MainCavoGUI : public QMainWindow {
 
     protected:
@@ -54,6 +51,8 @@ class MainCavoGUI : public QMainWindow {
         const int NS_PER_SECOND = 1000000000;
         const int UPS_OBJECT = 22;
         const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
+
+        bool using2Threads = false;
 
         const string RENDER_RESULTS_NAMES[4] = {"Croma aplicado", "Umbralización", "Umbralización Inversa", "Fusión del Video"};
 

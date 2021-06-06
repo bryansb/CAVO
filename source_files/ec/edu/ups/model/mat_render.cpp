@@ -15,6 +15,7 @@ MatRender::MatRender(string title, int w, QWidget *parent)
 void MatRender::render(cv::Mat img, double percent){
     Mat image = img.clone();
     if (image.cols != 0 && image.rows != 0) {
+        resizeEvent(0);
         if (image.channels() == 1) {
             cv::cvtColor(image, image, cv::COLOR_GRAY2RGB);
         }
@@ -24,7 +25,7 @@ void MatRender::render(cv::Mat img, double percent){
         qimage = QImage((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
         
         frameLabel->setPixmap(QPixmap::fromImage(qimage.copy()));
-        frameLabel->update( );
+        update();
     }
 }
 
@@ -32,6 +33,6 @@ void MatRender::setTitle(string title){
     titleLabel->setText(QString::fromStdString(title));
 }
 
-void MatRender::setW(int w) {
+void MatRender::setWidth(int w) {
     this->w = w;
 }

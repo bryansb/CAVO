@@ -31,5 +31,5 @@ class MatRender : public QWidget{
         void render(cv::Mat, double percent);
         void setTitle(string title);
 
-        void setW(int w);
+        void setWidth(int w);
 };

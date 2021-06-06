@@ -255,9 +255,9 @@ int MainCavoGUI::init(){
 
     this->show();
     w = imageBox->width();
-    cameraRender->setW(w);
-    videoRender->setW(w);
-    chromaRenderController->setW(w);
+    cameraRender->setWidth(w);
+    videoRender->setWidth(w);
+    chromaRenderController->setWidth(w);
     
     video = NULL;
     startProcess();
@@ -337,7 +337,7 @@ void MainCavoGUI::readCameraAndRender(){
                     firstFrame = false;
                 }
 
-                if (video != NULL && runningVideo) {
+                if (video != NULL && runningVideo && !using2Threads) {
                     if (video->nextFrame()) {
                             setChannelValues();
                             setKernelValues();
@@ -371,63 +371,62 @@ long MainCavoGUI::nanoTime(){
 
 }
 
-// void MainCavoGUI::startProcessConverter(){
+void MainCavoGUI::startProcessConverter(){
 
-//     int aps = 0;
-//     int fps = 0;
-//     int ups = 0;
+    int aps = 0;
+    int fps = 0;
+    int ups = 0;
 
-//     long updateReference = nanoTime();
-//     long countReference = nanoTime();
+    long updateReference = nanoTime();
+    long countReference = nanoTime();
 
-//     double timeElapsed;
-//     double delta = 0;
+    double timeElapsed;
+    double delta = 0;
 
-//     long loopStart;
+    long loopStart;
 
-//     while(running){
-//         loopStart = nanoTime();
-//         timeElapsed = loopStart - updateReference;
-//         updateReference = loopStart;
+    while(running && using2Threads){
+        loopStart = nanoTime();
+        timeElapsed = loopStart - updateReference;
+        updateReference = loopStart;
 
-//         delta += timeElapsed / NS_PER_UPDATES;
+        delta += timeElapsed / NS_PER_UPDATES;
 
-//         while (delta >= 1) {
-//             try {
-//                 if (video != NULL && runningVideo) {
-//                     if (video->nextFrame()) {
-//                             setChannelValues();
-//                             setKernelValues();
-//                             video->setFrame(chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB));
+        while (delta >= 1) {
+            try {
+                if (video != NULL && runningVideo) {
+                    if (video->nextFrame()) {
+                            setChannelValues();
+                            setKernelValues();
+                            video->setFrame(chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB));
 
-//                             chromaRenderController->applyMorphologicalOperation(camera->getFrame());
-//                             chromaRenderController->merge();
+                            chromaRenderController->applyMorphologicalOperation(camera->getFrame());
+                            chromaRenderController->merge();
 
-//                             showRender();
+                            showRender();
                             
-//                             addMatToWidget(videoRender, video->getFrame());
-//                     } else {
-//                         loadVideo(pathToVideo);
-//                     }
+                            addMatToWidget(videoRender, video->getFrame());
+                    } else {
+                        loadVideo(pathToVideo);
+                    }
                 
-//                 }
-//             }catch (exception&){
-//                 cout << "LOG: Processing video was busy" << endl;
-//             }
-//             ups++;
-//             delta--;
-//             fps++;
-//         }
+                }
+            }catch (exception&){
+                cout << "LOG: Processing video was busy" << endl;
+            }
+            ups++;
+            delta--;
+            fps++;
+        }
 
-//         if (nanoTime() - countReference > NS_PER_SECOND) {
-//             // cout << "FPS:" << fps << endl;
-//             ups = 0;
-//             fps = 0;
-//             countReference = nanoTime();
-//         }
-//     }
-
-// }
+        if (nanoTime() - countReference > NS_PER_SECOND) {
+            // cout << "FPS:" << fps << endl;
+            ups = 0;
+            fps = 0;
+            countReference = nanoTime();
+        }
+    }
+}
 
 void MainCavoGUI::mergeVideoCamera(){
     chromaRenderController->setTitle("Croma Aplicado");
@@ -659,7 +658,10 @@ void MainCavoGUI::startProcess(){
     thread_pool.clear();
     running = true;
     thread_pool.push_back(std::thread(&MainCavoGUI::readCameraAndRender, this));
-    // thread_pool.push_back(std::thread(&MainCavoGUI::startProcessConverter, this));
+    if (using2Threads)
+        thread_pool.push_back(std::thread(&MainCavoGUI::startProcessConverter, this));
+
+    cout << "LOG: Using " << thread_pool.size() << " thread/s" << endl;
     
 }
 

@@ -1,4 +1,3 @@
-
 #include "../../../../../header_files/slider_group.hpp"
 
 SliderGroup::SliderGroup(Qt::Orientation orientation, QString title,
@@ -36,11 +35,6 @@ void SliderGroup::setMinimum(int v) {
 
 void SliderGroup::setMaximum(int v) {
     dial->setMaximum(v);
-}
-
-void SliderGroup::invertAppearance(bool invert)
-{
-    dial->setInvertedAppearance(invert);
 }
 
 void SliderGroup::changeValue(){
