@@ -29,7 +29,7 @@ include_directories( ${OpenCV_INCLUDE_DIRS} ${INCLUDE_LIST})
 # ENDIF()
 
 add_executable(${PROJECT_NAME}
-  "source_files/ec/edu/ups/controller/chroma_controller_render.cpp"
+  "source_files/ec/edu/ups/controller/chroma_render_controller.cpp"
   "source_files/ec/edu/ups/controller/morphological_operation.cpp"
   "source_files/ec/edu/ups/model/frame.cpp"
   "source_files/ec/edu/ups/model/camera.cpp"

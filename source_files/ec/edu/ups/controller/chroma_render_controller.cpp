@@ -1,4 +1,4 @@
-#include "../../../../../header_files/chroma_controller_render.hpp"
+#include "../../../../../header_files/chroma_render_controller.hpp"
 
 ChromaRenderController::ChromaRenderController(string title, int w, QWidget *parent) 
     : MatRender(title, w, parent) {}
@@ -68,9 +68,6 @@ void ChromaRenderController::merge(){
     cv::resize(video->getFrame(), videoRS, cv::Size(camera->width, camera->height));
 
     applyChromaEffect(cameraOriginal, videoRS, cameraThreshold, result);
-    // result = cv::abs(videoRS - cameraFiltered);
-    // result = cameraFiltered;
-    // result = this->cameraThreshold;
 }
 
 // Color Space

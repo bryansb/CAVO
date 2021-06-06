@@ -3,8 +3,8 @@
 MainCavoGUI::MainCavoGUI(){}
 
 int MainCavoGUI::init(){
-    this->setFixedSize(1500, 900);
     // setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
+    this->setFixedSize(1500, 900);
     this->setWindowTitle(QString::fromStdString(APP_NAME));
     widget = new QWidget(this);
     layout = new QGridLayout(widget);
@@ -216,37 +216,37 @@ int MainCavoGUI::init(){
 
     // --- ROW 2, 1
 
+    
+
     imageBox = new QGroupBox("Resultado", widget);
-    QScrollArea* scrollArea = new QScrollArea();
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setWidget(imageBox);
-    layout->addWidget(scrollArea, 2, 1, 1, 1);
+    layout->addWidget(imageBox, 2, 1, 1, 1);
 
     resultLayout = new QGridLayout(imageBox);
-    resultWidget = new QWidget(imageBox);
 
-    // AUX
-    w = imageBox->width();
-    // cout << "w:" << w << endl;
-    resultLayout->addWidget(resultWidget);
+    QWidget *selectionResultW = new QWidget(imageBox);
+    selectionResultW->setContentsMargins(2, 2, 2, 2);
+    selectionResultW->setMaximumHeight(50);
+    resultLayout->addWidget(selectionResultW, 0, 0, 1, 2);
+    QHBoxLayout *selectionResultL = new QHBoxLayout(selectionResultW);
 
-    cameraRender = new MatRender("Cámara", w,  resultWidget);
-    resultLayout->addWidget(cameraRender, 0, 0, 1, 1);
+    selectionResultL->addWidget(new QLabel("Seleccione un resultado:"));
+    resultsRenderCbox = new QComboBox(imageBox);
+    resultsRenderCbox->addItems({"Croma aplicado", "Umbralización", "Umbralización Inversa", "Fusión del Video"});
+    selectionResultL->addWidget(resultsRenderCbox);
+    selectionResultL->addStretch();
+    connect(resultsRenderCbox, QOverload<int>::of(&QComboBox::activated),
+            this, &MainCavoGUI::handleShowResult);
 
-    videoRender = new MatRender("Video", w, resultWidget);
-    resultLayout->addWidget(videoRender, 1, 0, 1, 1);
+    // resultLayout->addWidget(resultWidget);
 
-    chromaRenderController = new ChromaRenderController("Seleccione un Video", w, resultWidget);
-    resultLayout->addWidget(chromaRenderController, 0, 1, 2, 1);
+    cameraRender = new MatRender("Cámara", w,  imageBox);
+    resultLayout->addWidget(cameraRender, 1, 0, 1, 1);
 
-    cameraThresholdRender = new MatRender("Umbralizacón", w, resultWidget);
-    resultLayout->addWidget(cameraThresholdRender, 2, 1, 1, 1);
+    videoRender = new MatRender("Video", w, imageBox);
+    resultLayout->addWidget(videoRender, 2, 0, 1, 1);
 
-    cameraThresholdNRender = new MatRender("Umbralizacón Inversa", w, resultWidget);
-    resultLayout->addWidget(cameraThresholdNRender, 3, 1, 1, 1);
-
-    videoFusionBackgroundRender= new MatRender("Fusión del Video", w, resultWidget);
-    resultLayout->addWidget(videoFusionBackgroundRender, 4, 1, 1, 1);
+    chromaRenderController = new ChromaRenderController("Seleccione un Video", w, imageBox);
+    resultLayout->addWidget(chromaRenderController, 1, 1, 2, 1);
 
     layout->setRowStretch(0, 1);
     layout->setRowStretch(1, 5);
@@ -258,26 +258,17 @@ int MainCavoGUI::init(){
     cameraRender->setW(w);
     videoRender->setW(w);
     chromaRenderController->setW(w);
-    cameraThresholdRender->setW(w);
-    cameraThresholdNRender->setW(w);
-    videoFusionBackgroundRender->setW(w);
     
     video = NULL;
     startProcess();
     return 0;
 }
 
-void MainCavoGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent){
+void MainCavoGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent, string title){
     try {
-        
-        // std::lock_guard<std::mutex> guard(frame_mutex);
-        // int w = this->w;
-        // if (!render->busy) {
-            
-            // render->setW(w);
-            render->render(image, percent);
-            // render->busy = false;
-        // }
+        if (!title.empty())
+            render->setTitle(title);
+        render->render(image, percent);
     } catch(exception&){
         cout << "LOG: Render Busy on Rendering" << endl;
         render->busy = false;
@@ -293,8 +284,6 @@ void MainCavoGUI::handleVideoChooserButton(){
 void MainCavoGUI::loadVideo(string path){
     runningVideo = false;
     if (!path.empty()) {
-        delete video;
-        video = NULL;
         pathToVideo = path; 
         video = new Frame(pathToVideo);
         mergeVideoCamera();
@@ -396,10 +385,9 @@ void MainCavoGUI::startProcessConverter(){
 
                             chromaRenderController->applyMorphologicalOperation(camera->getFrame());
                             chromaRenderController->merge();
-                            addMatToWidget(chromaRenderController, chromaRenderController->getResult(), 0.6);
-                            addMatToWidget(cameraThresholdRender, chromaRenderController->getCameraThreshold(), 0.6);
-                            addMatToWidget(cameraThresholdNRender, chromaRenderController->getCameraThresholdN(), 0.6);
-                            addMatToWidget(videoFusionBackgroundRender, chromaRenderController->getVideoFusionBackground(), 0.6);
+
+                            showRender();
+                            
                             addMatToWidget(videoRender, video->getFrame());
                             QCoreApplication::processEvents( );
                     } else {
@@ -606,17 +594,41 @@ void MainCavoGUI::handleMorphologicOperation(int i){
     }
 }
 
-void MainCavoGUI::setKernelValues() {
+void MainCavoGUI::handleShowResult(int selectResultIndex){
+    this->selectResultIndex = selectResultIndex;
+}
+
+void MainCavoGUI::setKernelValues(){
     chromaRenderController->setFilterKernelSize(filterKernelSizeBox->value());
     chromaRenderController->setEdgeKernelSize(edgeKernelSizeBox->value());
     chromaRenderController->setMOpKernelSize(mOpKernelSizeBox->value());
 }
 
-void MainCavoGUI::showCannySlider(int index) {
+void MainCavoGUI::showCannySlider(int index){
     if (index == FRAME_TO_CANNY) {
         cannySlider->setVisible(true);
     } else {
         cannySlider->setVisible(false);
+    }
+}
+
+void MainCavoGUI::showRender(){
+    switch (selectResultIndex)
+    {
+    case 0:
+        addMatToWidget(chromaRenderController, chromaRenderController->getResult(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
+        break;
+    case 1:
+        addMatToWidget(chromaRenderController, chromaRenderController->getCameraThreshold(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
+        break;
+    case 2:
+        addMatToWidget(chromaRenderController, chromaRenderController->getCameraThresholdN(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
+        break;
+    case 3:
+        addMatToWidget(chromaRenderController, chromaRenderController->getVideoFusionBackground(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
+        break;
+    default:
+        break;
     }
 }
 

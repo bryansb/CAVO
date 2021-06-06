@@ -6,6 +6,7 @@
 class ChromaRenderController : public MatRender {
 
     private:
+
         Frame *video;
         Camera *camera;
         

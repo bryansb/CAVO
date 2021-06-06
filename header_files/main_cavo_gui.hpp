@@ -2,7 +2,7 @@
 
 #include "slider_group.hpp"
 
-#include "chroma_controller_render.hpp"
+#include "chroma_render_controller.hpp"
 
 #include <QApplication>
 #include <QLabel>
@@ -40,6 +40,7 @@ class MainCavoGUI : public QMainWindow {
         void handleFilter(int);
         void handleEdgeDetector(int);
         void handleMorphologicOperation(int);
+        void handleShowResult(int);
 
         void handleChannel1Min(int);
         void handleChannel2Min(int);
@@ -54,6 +55,8 @@ class MainCavoGUI : public QMainWindow {
         const int UPS_OBJECT = 22;
         const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
 
+        const string RENDER_RESULTS_NAMES[4] = {"Croma aplicado", "Umbralización", "Umbralización Inversa", "Fusión del Video"};
+
         bool runningVideo = false;
         string pathToVideo;
 
@@ -63,10 +66,6 @@ class MainCavoGUI : public QMainWindow {
         Frame *video;
         MatRender *cameraRender;
         MatRender *videoRender;
-
-        MatRender *videoFusionBackgroundRender;
-        MatRender *cameraThresholdRender;
-        MatRender *cameraThresholdNRender;
 
         ChromaRenderController *chromaRenderController;
 
@@ -98,6 +97,8 @@ class MainCavoGUI : public QMainWindow {
         QComboBox *morphologicalOperationCbox;
         QComboBox *edgeDetectorCbox;
 
+        QComboBox *resultsRenderCbox;
+
         QSpinBox *filterKernelSizeBox;
         QSpinBox *edgeKernelSizeBox;
         QSpinBox *mOpKernelSizeBox;
@@ -109,6 +110,8 @@ class MainCavoGUI : public QMainWindow {
         int channel1Max = 255;
         int channel2Max = 255;
         int channel3Max = 255;
+
+        int selectResultIndex = 0;
 
         const string APP_NAME = "C.A.V.O.";
         bool running = false;
@@ -131,6 +134,7 @@ class MainCavoGUI : public QMainWindow {
 
         void setKernelValues();
         void showCannySlider(int index);
+        void showRender();
         
         void stopProcess();
     public:
@@ -140,7 +144,7 @@ class MainCavoGUI : public QMainWindow {
 
         int w;
 
-        void addMatToWidget(MatRender *render, cv::Mat, double percent=0.3);
+        void addMatToWidget(MatRender *render, cv::Mat, double percent=0.3, string title="");
         void displayImage(string, cv::Mat);
         void startProcess();
 
