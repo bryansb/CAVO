@@ -16,8 +16,6 @@ void ChromaRenderController::merge(){
     
     cameraOriginal = applyColorSpace(cameraOriginal, FRAME_TO_RGB);
     cameraFiltered = applyColorSpace(cameraFiltered, colorSpace);
-
-    
     
     // vector<cv::Mat> canales;
     // cv::Mat cielab;
@@ -35,35 +33,6 @@ void ChromaRenderController::merge(){
     edge = applyEdgeDetector(edge);
     cameraThreshold += edge;
     cameraThreshold = applyMorphologicalOperation(cameraThreshold);
-
-
-    //----
-
-    // applyMorphologicalOperation(cameraThreshold);
-
-    // Mat edge = cameraThreshold.clone();
-    // applyEdgeDetector(edge);
-    // cameraThreshold += edge;
-
-    // applyFilter(cameraThreshold);
-    
-    
-    // ----
-    
-
-    // applyFilter(cameraThreshold);
-
-    // cameraThreshold = makeBinaryThresholding(cameraFiltered);
-
-    // applyFilter(cameraThreshold);
-
-    // applyMorphologicalOperation(cameraThreshold);
-
-    // Mat edge = cameraThreshold.clone();
-    // applyEdgeDetector(edge);
-    // cameraThreshold += edge;
-    
-    
 
     cv::resize(video->getFrame(), videoRS, cv::Size(camera->width, camera->height));
 

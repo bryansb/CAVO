@@ -58,7 +58,7 @@ class ChromaRenderController : public MatRender {
         cv::Mat applyLaplacian(cv::Mat frame);
 
         // Morphological Operation
-        // in other class
+        // in another class
 
         // Threshold
         cv::Mat makeBinaryThresholding(cv::Mat frame);
