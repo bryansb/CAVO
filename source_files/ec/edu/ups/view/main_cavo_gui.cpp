@@ -318,7 +318,7 @@ void MainCavoGUI::closeEvent (QCloseEvent *event){
 }
 
 void MainCavoGUI::readCameraAndRender(){
-    camera = new Camera(0);
+    camera = new Camera(cameraNumber);
     chromaRenderController->setCamera(camera);
 
     bool firstFrame = true;
