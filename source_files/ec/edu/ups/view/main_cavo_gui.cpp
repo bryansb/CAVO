@@ -275,10 +275,10 @@ int MainCavoGUI::init(){
 
 void MainCavoGUI::resizeEvent(QResizeEvent* event){
     QMainWindow::resizeEvent(event);
-    w = imageBox->width();
-    cameraRender->setWidth(w);
-    videoRender->setWidth(w);
-    chromaRenderController->setWidth(w);
+    // w = imageBox->width();
+    // cameraRender->setWidth(w);
+    // videoRender->setWidth(w);
+    // chromaRenderController->setWidth(w);
 }
 
 
@@ -523,10 +523,10 @@ void MainCavoGUI::startProcess(){
     camera = new Camera(cameraNumber);
     chromaRenderController->setCamera(camera);
     
-    threadRC->startCamera(camera, cameraRender);
+    threadRC->startCamera(camera, cameraRender, imageBox);
 
     setChannelValues();
-    threadRC->startChromaRenderController(chromaRenderController, videoRender);
+    threadRC->startChromaRenderController(chromaRenderController, videoRender, imageBox);
     
 }
 

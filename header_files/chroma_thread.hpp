@@ -6,6 +6,7 @@
 #include "base.hpp"
 
 #include <QThread>
+#include <QGroupBox>
 
 class ChromaThread : public QThread {
     
@@ -25,6 +26,8 @@ class ChromaThread : public QThread {
         ChromaRenderController *chromaRC;
         MatRender *videoRender;
 
+        QGroupBox *box;
+
         long nanoTime();
 
         void showRender();
@@ -43,6 +46,8 @@ class ChromaThread : public QThread {
         void setVideo(Frame *video);
         void setCamera(Camera *camera);
 
+        void setBox(QGroupBox *);
+
         string path;
 
         Frame * loadVideo();
@@ -60,6 +65,8 @@ class CameraThread : public QThread {
         Camera *camera;
         MatRender *cameraRender;
 
+        QGroupBox *box;
+
     public:
         bool running = false;
         
@@ -68,6 +75,8 @@ class CameraThread : public QThread {
 
         void setCamera(Camera *Camera);
         void setCameraRender(MatRender *cameraRender);
+
+        void setBox(QGroupBox *);
     
 };
 
@@ -85,8 +94,8 @@ class ThreadRenderController {
         ThreadRenderController();
 
         // void start(Camera *, ChromaRenderController *);
-        void startCamera(Camera *camera, MatRender *cameraRender);
-        void startChromaRenderController(ChromaRenderController *, MatRender *videoRender);
+        void startCamera(Camera *camera, MatRender *cameraRender, QGroupBox * box);
+        void startChromaRenderController(ChromaRenderController *, MatRender *videoRender, QGroupBox * box);
         void stop();
 
         void loadNewVideo(Frame *video);

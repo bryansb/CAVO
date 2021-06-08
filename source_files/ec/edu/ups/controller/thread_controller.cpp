@@ -1,6 +1,5 @@
 
 #include "../../../../../header_files/chroma_thread.hpp"
-#include <QDebug>
 
 CameraThread::CameraThread() {
 }
@@ -19,7 +18,7 @@ void CameraThread::run(){
                     firstFrame = false;
                 }
 
-                // cameraRender->setWidth(imageBox->width());
+                cameraRender->setWidth(box->width());
                 cameraRender->render(cameraShow, 0.3);
             }
         
@@ -35,6 +34,10 @@ void CameraThread::setCamera(Camera *camera){
 
 void CameraThread::setCameraRender(MatRender *cameraRender){    
     this->cameraRender = cameraRender;
+}
+
+void CameraThread::setBox(QGroupBox * box){
+    this->box = box;
 }
 
 // **********************************************
@@ -80,20 +83,12 @@ void ChromaThread::run(){
                 if (video != NULL) {
                     if (video->nextFrame()) {
                             cv::cvtColor(video->getFrame(), video->getFrame(), cv::COLOR_BGR2RGB);
-                            // cout << chromaRC != NULL << endl;
-                            // chromaRC->applyMorphologicalOperation(chromaRC->getCamera());
                             chromaRC->merge();
-
-                            // showRender();
-                            
-                            // videoRender->setWidth(imageBox->width());
-                            // chromaRenderController->setWidth(imageBox->width());
-                            // addMatToWidget(videoRender, video->getFrame());
+                            videoRender->setWidth(box->width());
+                            chromaRC->setWidth(box->width());
                             videoRender->render(video->getFrame(), 0.3);
                             showRender();
-                            // chromaRenderController->render(chromaRenderController->get, 0.6);
                     } else {
-                        // emit videoFinished(true);
                         loadVideo();
                     }
                 
@@ -125,17 +120,14 @@ void ChromaThread::showRender(){
     case 1:
         chromaRC->setTitle(RENDER_RESULTS_NAMES[selectResultIndex]);
         chromaRC->render(chromaRC->getCameraThreshold(), 0.6);
-        // addMatToWidget(chromaRenderController, chromaRenderController->getCameraThreshold(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
         break;
     case 2:
         chromaRC->setTitle(RENDER_RESULTS_NAMES[selectResultIndex]);
         chromaRC->render(chromaRC->getCameraThresholdN(), 0.6);
-        // addMatToWidget(chromaRenderController, chromaRenderController->getCameraThresholdN(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
         break;
     case 3:
         chromaRC->setTitle(RENDER_RESULTS_NAMES[selectResultIndex]);
         chromaRC->render(chromaRC->getVideoFusionBackground(), 0.6);
-        // addMatToWidget(chromaRenderController, chromaRenderController->getVideoFusionBackground(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
         break;
     default:
         break;
@@ -158,6 +150,10 @@ void ChromaThread::setCamera(Camera *camera){
     this->camera = camera;
 }
 
+void ChromaThread::setBox(QGroupBox *box){
+    this->box = box;
+}
+
 
 // **********************************************
 
@@ -170,19 +166,18 @@ ThreadRenderController::ThreadRenderController(){
     this->chromaThread = new ChromaThread();
 }
 
-void ThreadRenderController::startCamera(Camera *camera, MatRender *cameraRender){
+void ThreadRenderController::startCamera(Camera *camera, MatRender *cameraRender, QGroupBox *box){
     this->cameraThread->setCamera(camera);
     this->cameraThread->setCameraRender(cameraRender);
+    this->cameraThread->setBox(box);
     cameraThread->running = true;
     cameraThread->start();
 }
 
-void ThreadRenderController::startChromaRenderController(ChromaRenderController *chromaRC, MatRender *videoRender){
+void ThreadRenderController::startChromaRenderController(ChromaRenderController *chromaRC, MatRender *videoRender, QGroupBox *box){
     this->chromaThread->setChromaRenderController(chromaRC);
     this->chromaThread->setVideoRender(videoRender);
-    // this->chromaThread->setCamera(camera);
-    // chromaThread->running = true;
-    // chromaThread->start();
+    this->chromaThread->setBox(box);
 }
 
 void ThreadRenderController::loadNewVideo(Frame *video){

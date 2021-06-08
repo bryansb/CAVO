@@ -26,8 +26,10 @@ void MatRender::render(cv::Mat img, double percent){
         pixmap = QPixmap::fromImage(qimage.copy());
         
         frameLabel->setUpdatesEnabled(false);
+        setUpdatesEnabled(false);
         frameLabel->setPixmap(pixmap);
         frameLabel->setUpdatesEnabled(true);
+        setUpdatesEnabled(true);
         update();
     }
 }
