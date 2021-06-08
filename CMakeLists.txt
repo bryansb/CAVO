@@ -39,6 +39,8 @@ add_executable(${PROJECT_NAME}
   "source_files/ec/edu/ups/view/main.cpp"
   "source_files/ec/edu/ups/model/slider_group.cpp"
   "source_files/ec/edu/ups/view/main_cavo_gui.cpp"
+
+  "source_files/ec/edu/ups/controller/thread_controller.cpp"
 )
 
 # target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_LIST}

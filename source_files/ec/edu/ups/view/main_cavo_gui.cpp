@@ -40,7 +40,6 @@ int MainCavoGUI::init(){
     QGroupBox *channelBox = new QGroupBox("Canales", widget);
     channelBox->setMaximumWidth(300);
     channelBox->setMaximumHeight(800);
-    // channelBox->setSizePolicy
     layout->addWidget(channelBox, 1, 0, 2, 1);
 
     QVBoxLayout * colorSpaceLayout = new QVBoxLayout(channelBox);
@@ -136,10 +135,11 @@ int MainCavoGUI::init(){
     // --- ROW 1, 1
 
     QGroupBox *allFilterBox = new QGroupBox("Filtros", widget);
+    allFilterBox->setContentsMargins(0,0,0,0);
     allFilterBox->setMaximumHeight(150);
     layout->addWidget(allFilterBox, 1, 1, 1, 1);
     QHBoxLayout *allFilterLayout = new QHBoxLayout(allFilterBox);
-    allFilterLayout->setContentsMargins(2, 2, 2, 2);
+    allFilterLayout->setContentsMargins(0,0,0,0);
 
     //----
     QWidget *filterWidget = new QWidget(allFilterBox);
@@ -158,6 +158,8 @@ int MainCavoGUI::init(){
     filterKernelSizeBox->setMinimum(3);
     filterKernelSizeBox->setSingleStep(2);
     filterKernelSizeBox->setPrefix("Kernel: ");
+    connect(filterKernelSizeBox, qOverload<int>(&QSpinBox::valueChanged), this, &MainCavoGUI::handleFilterKernel);
+    
     filterLayout->addWidget(filterKernelSizeBox);
 
     filterCbox = new QComboBox(filterWidget);
@@ -178,6 +180,7 @@ int MainCavoGUI::init(){
     cannySlider = new SliderGroup(Qt::Horizontal, tr("Threshold"), filterWidget);
     cannySlider->setMaximum(255);
     cannySlider->setVisible(false);
+    connect(cannySlider->getDial(), QOverload<int>::of(&QDial::valueChanged), this, &MainCavoGUI::handleCannyKernel);
     filterLayoutBox->addWidget(cannySlider);
 
     kernelLabel = new QLabel("Detección de Bordes:");
@@ -189,6 +192,7 @@ int MainCavoGUI::init(){
     edgeKernelSizeBox->setMinimum(3);
     edgeKernelSizeBox->setSingleStep(2);
     edgeKernelSizeBox->setPrefix("Kernel: ");
+    connect(edgeKernelSizeBox, qOverload<int>(&QSpinBox::valueChanged), this, &MainCavoGUI::handleEdgeKernel);
     filterLayout->addWidget(edgeKernelSizeBox);
 
     edgeDetectorCbox = new QComboBox(filterWidget);
@@ -210,6 +214,7 @@ int MainCavoGUI::init(){
     mOpKernelSizeBox->setMinimum(3);
     mOpKernelSizeBox->setSingleStep(2);
     mOpKernelSizeBox->setPrefix("Kernel: ");
+    connect(mOpKernelSizeBox, qOverload<int>(&QSpinBox::valueChanged), this, &MainCavoGUI::handleOMorphKernel);
     filterLayout->addWidget(mOpKernelSizeBox);
 
     morphologicalOperationCbox = new QComboBox(filterWidget);
@@ -219,8 +224,6 @@ int MainCavoGUI::init(){
             this, &MainCavoGUI::handleMorphologicOperation);
 
     // --- ROW 2, 1
-
-    
 
     imageBox = new QGroupBox("Resultado", widget);
     QScrollArea *scrollArea = new QScrollArea();
@@ -266,21 +269,18 @@ int MainCavoGUI::init(){
     videoRender->setWidth(w);
     chromaRenderController->setWidth(w);
     
-    video = NULL;
     startProcess();
     return 0;
 }
 
-void MainCavoGUI::addMatToWidget(MatRender *render, cv::Mat image, double percent, string title){
-    try {
-        if (!title.empty())
-            render->setTitle(title);
-        render->render(image, percent);
-    } catch(exception&){
-        cout << "LOG: Render Busy on Rendering" << endl;
-        render->busy = false;
-    }
+void MainCavoGUI::resizeEvent(QResizeEvent* event){
+    QMainWindow::resizeEvent(event);
+    w = imageBox->width();
+    cameraRender->setWidth(w);
+    videoRender->setWidth(w);
+    chromaRenderController->setWidth(w);
 }
+
 
 void MainCavoGUI::handleVideoChooserButton(){
     videoPath->setText(QFileDialog::getOpenFileName(this,
@@ -292,8 +292,8 @@ void MainCavoGUI::loadVideo(string path){
     runningVideo = false;
     if (!path.empty()) {
         pathToVideo = path; 
-        video = new Frame(pathToVideo);
-        mergeVideoCamera();
+        threadRC->loadNewVideo(pathToVideo);
+
     }
     runningVideo = true;
 }
@@ -322,126 +322,6 @@ void MainCavoGUI::closeEvent (QCloseEvent *event){
         stopProcess();
         event->accept();
     }
-}
-
-void MainCavoGUI::readCameraAndRender(){
-    camera = new Camera(cameraNumber);
-    chromaRenderController->setCamera(camera);
-
-    bool firstFrame = true;
-    Mat cameraShow;
-
-    changeColorSpace();
-
-    while(running){
-        try {
-            if(camera->nextFrame(true)){
-                cameraShow = camera->getFrame().clone();
-                cameraShow = chromaRenderController->applyColorSpace(cameraShow, FRAME_TO_RGB);
-                if (firstFrame) {
-                    camera->width = cameraShow.cols;
-                    camera->height = cameraShow.rows;
-                    firstFrame = false;
-                }
-
-                if (video != NULL && runningVideo && !using2Threads) {
-                    if (video->nextFrame()) {
-                            setChannelValues();
-                            setKernelValues();
-                            video->setFrame(chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB));
-
-                            chromaRenderController->applyMorphologicalOperation(camera->getFrame());
-                            chromaRenderController->merge();
-
-                            showRender();
-                            
-                            videoRender->setWidth(imageBox->width());
-                            chromaRenderController->setWidth(imageBox->width());
-                            addMatToWidget(videoRender, video->getFrame());
-                    } else {
-                        loadVideo(pathToVideo);
-                    }
-                
-                }
-                cameraRender->setWidth(imageBox->width());
-                addMatToWidget(cameraRender, cameraShow);
-            }
-        
-        } catch (exception&){
-            cout << "LOG: Camera Render is busy" << endl;
-        }
-    }
-}
-
-long MainCavoGUI::nanoTime(){
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    auto duration = now.time_since_epoch(); 
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(duration).count();
-
-}
-
-void MainCavoGUI::startProcessConverter(){
-
-    int aps = 0;
-    int fps = 0;
-    int ups = 0;
-
-    long updateReference = nanoTime();
-    long countReference = nanoTime();
-
-    double timeElapsed;
-    double delta = 0;
-
-    long loopStart;
-
-    while(running && using2Threads){
-        loopStart = nanoTime();
-        timeElapsed = loopStart - updateReference;
-        updateReference = loopStart;
-
-        delta += timeElapsed / NS_PER_UPDATES;
-
-        while (delta >= 1) {
-            try {
-                if (video != NULL && runningVideo) {
-                    if (video->nextFrame()) {
-                            setChannelValues();
-                            setKernelValues();
-                            video->setFrame(chromaRenderController->applyColorSpace(video->getFrame(), FRAME_TO_RGB));
-
-                            chromaRenderController->applyMorphologicalOperation(camera->getFrame());
-                            chromaRenderController->merge();
-
-                            showRender();
-                            
-                            videoRender->setWidth(imageBox->width());
-                            chromaRenderController->setWidth(imageBox->width());
-                            addMatToWidget(videoRender, video->getFrame());
-                    } else {
-                        loadVideo(pathToVideo);
-                    }
-                
-                }
-            }catch (exception&){
-                cout << "LOG: Processing video was busy" << endl;
-            }
-            ups++;
-            delta--;
-            fps++;
-        }
-
-        if (nanoTime() - countReference > NS_PER_SECOND) {
-            // cout << "FPS:" << fps << endl;
-            ups = 0;
-            fps = 0;
-            countReference = nanoTime();
-        }
-    }
-}
-
-void MainCavoGUI::mergeVideoCamera(){
-    // chromaRenderController->setTitle("Croma Aplicado");
-    chromaRenderController->setVideo(video);
 }
 
 void MainCavoGUI::setChannelValues(){
@@ -621,13 +501,7 @@ void MainCavoGUI::handleMorphologicOperation(int i){
 }
 
 void MainCavoGUI::handleShowResult(int selectResultIndex){
-    this->selectResultIndex = selectResultIndex;
-}
-
-void MainCavoGUI::setKernelValues(){
-    chromaRenderController->setFilterKernelSize(filterKernelSizeBox->value());
-    chromaRenderController->setEdgeKernelSize(edgeKernelSizeBox->value());
-    chromaRenderController->setMOpKernelSize(mOpKernelSizeBox->value());
+    threadRC->setSelectResultIndex(selectResultIndex);
 }
 
 void MainCavoGUI::showCannySlider(int index){
@@ -638,64 +512,60 @@ void MainCavoGUI::showCannySlider(int index){
     }
 }
 
-void MainCavoGUI::showRender(){
-    switch (selectResultIndex)
-    {
-    case 0:
-        addMatToWidget(chromaRenderController, chromaRenderController->getResult(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
-        break;
-    case 1:
-        addMatToWidget(chromaRenderController, chromaRenderController->getCameraThreshold(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
-        break;
-    case 2:
-        addMatToWidget(chromaRenderController, chromaRenderController->getCameraThresholdN(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
-        break;
-    case 3:
-        addMatToWidget(chromaRenderController, chromaRenderController->getVideoFusionBackground(), 0.6, RENDER_RESULTS_NAMES[selectResultIndex]);
-        break;
-    default:
-        break;
-    }
-}
-
 void MainCavoGUI::stopProcess(){
-    running = false;
-    for (int i = 0; i < thread_pool.size(); i++){
-        thread_pool[i].join();
-    }
+    threadRC->stop();
 }
 
 void MainCavoGUI::startProcess(){
     thread_pool.clear();
-    running = true;
-    thread_pool.push_back(std::thread(&MainCavoGUI::readCameraAndRender, this));
-    if (using2Threads)
-        thread_pool.push_back(std::thread(&MainCavoGUI::startProcessConverter, this));
 
-    cout << "LOG: Using " << thread_pool.size() << " thread/s" << endl;
+    threadRC = new ThreadRenderController();
+    camera = new Camera(cameraNumber);
+    chromaRenderController->setCamera(camera);
+    
+    threadRC->startCamera(camera, cameraRender);
+
+    setChannelValues();
+    threadRC->startChromaRenderController(chromaRenderController, videoRender);
     
 }
 
 void MainCavoGUI::handleChannel1Min(int value){
-    channel1Min = value;
+    chromaRenderController->setChannel1Min(value);
 }
 
 void MainCavoGUI::handleChannel2Min(int value){
-    channel2Min = value;
+    chromaRenderController->setChannel2Min(value);
 }
 
 void MainCavoGUI::handleChannel3Min(int value){
-    channel3Min = value;
+    chromaRenderController->setChannel3Min(value);
 }
 
 void MainCavoGUI::handleChannel1Max(int value){
-    channel1Max = value;
+    chromaRenderController->setChannel1Max(value);
 }
 
 void MainCavoGUI::handleChannel2Max(int value){
-    channel2Max = value;
+    chromaRenderController->setChannel2Max(value);
 }
 
 void MainCavoGUI::handleChannel3Max(int value){
-    channel3Max = value;
+    chromaRenderController->setChannel3Max(value);
+}
+
+void MainCavoGUI::handleFilterKernel(int v){
+    chromaRenderController->setFilterKernelSize(v);
+}
+
+void MainCavoGUI::handleEdgeKernel(int v){
+    chromaRenderController->setEdgeKernelSize(v);
+}
+
+void MainCavoGUI::handleOMorphKernel(int v){
+    chromaRenderController->setMOpKernelSize(v);
+}
+
+void MainCavoGUI::handleCannyKernel(int v){
+    chromaRenderController->setThreshhold(v);  
 }
