@@ -54,7 +54,7 @@ class MainCavoGUI : public QMainWindow {
 
         const string RENDER_RESULTS_NAMES[4] = {"Croma aplicado", "Umbralización", "Umbralización Inversa", "Fusión del Video"};
 
-        bool using2Threads = false;
+        bool using2Threads = true;
         int cameraNumber = 0; // 0: default laptop camera
 
         bool runningVideo = false;
@@ -137,6 +137,8 @@ class MainCavoGUI : public QMainWindow {
         void showRender();
         
         void stopProcess();
+
+        void setRenderWidth();
     public:
         
         MainCavoGUI();

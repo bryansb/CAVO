@@ -3,8 +3,12 @@
 MainCavoGUI::MainCavoGUI(){}
 
 int MainCavoGUI::init(){
-    setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
-    this->setFixedSize(1500, 900);
+    // setWindowFlags(Qt::Widget | Qt::MSWindowsFixedSizeDialogHint);
+    // this->setFixedSize(1500, 900);
+    // setSizeIncrement(1500, 900);
+    // setMinimumSize(1500, 900);
+    // setBaseSize(1500, 900);
+    resize(1500, 900);
     this->setWindowTitle(QString::fromStdString(APP_NAME));
     widget = new QWidget(this);
     layout = new QGridLayout(widget);
@@ -219,7 +223,10 @@ int MainCavoGUI::init(){
     
 
     imageBox = new QGroupBox("Resultado", widget);
-    layout->addWidget(imageBox, 2, 1, 1, 1);
+    QScrollArea *scrollArea = new QScrollArea();
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setWidget(imageBox);
+    layout->addWidget(scrollArea, 2, 1, 1, 1);
 
     resultLayout = new QGridLayout(imageBox);
 
@@ -348,13 +355,15 @@ void MainCavoGUI::readCameraAndRender(){
 
                             showRender();
                             
+                            videoRender->setWidth(imageBox->width());
+                            chromaRenderController->setWidth(imageBox->width());
                             addMatToWidget(videoRender, video->getFrame());
                     } else {
                         loadVideo(pathToVideo);
                     }
                 
                 }
-
+                cameraRender->setWidth(imageBox->width());
                 addMatToWidget(cameraRender, cameraShow);
             }
         
@@ -405,6 +414,8 @@ void MainCavoGUI::startProcessConverter(){
 
                             showRender();
                             
+                            videoRender->setWidth(imageBox->width());
+                            chromaRenderController->setWidth(imageBox->width());
                             addMatToWidget(videoRender, video->getFrame());
                     } else {
                         loadVideo(pathToVideo);
@@ -429,7 +440,7 @@ void MainCavoGUI::startProcessConverter(){
 }
 
 void MainCavoGUI::mergeVideoCamera(){
-    chromaRenderController->setTitle("Croma Aplicado");
+    // chromaRenderController->setTitle("Croma Aplicado");
     chromaRenderController->setVideo(video);
 }
 
