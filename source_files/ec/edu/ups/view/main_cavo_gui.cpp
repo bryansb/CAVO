@@ -226,10 +226,10 @@ int MainCavoGUI::init(){
     // --- ROW 2, 1
 
     imageBox = new QGroupBox("Resultado", widget);
-    QScrollArea *scrollArea = new QScrollArea();
-    scrollArea->setWidgetResizable(true);
-    scrollArea->setWidget(imageBox);
-    layout->addWidget(scrollArea, 2, 1, 1, 1);
+    // QScrollArea *scrollArea = new QScrollArea();
+    // scrollArea->setWidgetResizable(true);
+    // scrollArea->setWidget(imageBox);
+    layout->addWidget(imageBox, 2, 1, 1, 1);
 
     resultLayout = new QGridLayout(imageBox);
 
