@@ -13,22 +13,7 @@ find_package( OpenCV REQUIRED )
 find_package( Threads REQUIRED )
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-# set(INCLUDE_LIST 
-#   "header_files/ec/edu/ups/model"
-#   "header_files/ec/edu/ups/controller"
-#   "header_files/ec/edu/ups/view"
-#   "header_files/ec/edu/ups"
-# )
-
-# include_directories( ${OpenCV_INCLUDE_DIRS} ${INCLUDE_LIST})
-
 include_directories( ${OpenCV_INCLUDE_DIRS})
-
-# IF (WIN32)
-#   add_compile_definitions(CH_PLATFORM_WINDOWS)
-# ELSE()
-#   # set stuff for other systems
-# ENDIF()
 
 add_executable(${PROJECT_NAME}
   "source_files/ec/edu/ups/controller/chroma_render_controller.cpp"
@@ -39,10 +24,9 @@ add_executable(${PROJECT_NAME}
   "source_files/ec/edu/ups/view/main.cpp"
   "source_files/ec/edu/ups/model/slider_group.cpp"
   "source_files/ec/edu/ups/view/main_cavo_gui.cpp"
-)
 
-# target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_LIST}
-# )
+  "source_files/ec/edu/ups/controller/thread_controller.cpp"
+)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets ${OpenCV_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 

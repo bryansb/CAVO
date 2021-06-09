@@ -2,7 +2,9 @@
 
 #include "slider_group.hpp"
 
-#include "chroma_render_controller.hpp"
+// #include "chroma_render_controller.hpp"
+
+#include "chroma_thread.hpp"
 
 #include <QApplication>
 #include <QLabel>
@@ -27,6 +29,7 @@ class MainCavoGUI : public QMainWindow {
 
     protected:
         void closeEvent (QCloseEvent *event) override;
+        void resizeEvent(QResizeEvent *event) override;
 
     private slots:
         void handleKernelButton();
@@ -46,15 +49,16 @@ class MainCavoGUI : public QMainWindow {
         void handleChannel1Max(int);
         void handleChannel2Max(int);
         void handleChannel3Max(int);
-    
+
+        void handleFilterKernel(int);
+        void handleEdgeKernel(int);
+        void handleOMorphKernel(int);
+
+        void handleCannyKernel(int);
+
     private:
-        const int NS_PER_SECOND = 1000000000;
-        const int UPS_OBJECT = 22;
-        const double NS_PER_UPDATES = NS_PER_SECOND / UPS_OBJECT;
 
-        const string RENDER_RESULTS_NAMES[4] = {"Croma aplicado", "Umbralización", "Umbralización Inversa", "Fusión del Video"};
-
-        bool using2Threads = false;
+        bool using2Threads = true;
         int cameraNumber = 0; // 0: default laptop camera
 
         bool runningVideo = false;
@@ -63,13 +67,14 @@ class MainCavoGUI : public QMainWindow {
         std::mutex frame_mutex;
 
         Camera *camera;
-        Frame *video;
         MatRender *cameraRender;
         MatRender *videoRender;
 
         ChromaRenderController *chromaRenderController;
 
-        std::vector<std::thread > thread_pool;
+        std::vector<std::thread> thread_pool;
+        ThreadRenderController *threadRC;
+        
 
         QGridLayout *layout;
         QGridLayout *resultLayout;
@@ -132,11 +137,11 @@ class MainCavoGUI : public QMainWindow {
         void changeEdgeDetector();
         void changeMorpOperation();
 
-        void setKernelValues();
         void showCannySlider(int index);
-        void showRender();
         
         void stopProcess();
+
+        void setRenderWidth();
     public:
         
         MainCavoGUI();
@@ -144,7 +149,6 @@ class MainCavoGUI : public QMainWindow {
 
         int w;
 
-        void addMatToWidget(MatRender *render, cv::Mat, double percent=0.3, string title="");
         void displayImage(string, cv::Mat);
         void startProcess();
 

@@ -23,8 +23,13 @@ void MatRender::render(cv::Mat img, double percent){
         hs = (ws / image.cols) * image.rows;
         cv::resize(image, image, Size(abs(ws), abs(hs)));
         qimage = QImage((uchar*)image.data, image.cols, image.rows, image.step, QImage::Format_RGB888);
+        pixmap = QPixmap::fromImage(qimage.copy());
         
-        frameLabel->setPixmap(QPixmap::fromImage(qimage.copy()));
+        frameLabel->setUpdatesEnabled(false);
+        setUpdatesEnabled(false);
+        frameLabel->setPixmap(pixmap);
+        frameLabel->setUpdatesEnabled(true);
+        setUpdatesEnabled(true);
         update();
     }
 }

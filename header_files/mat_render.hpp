@@ -14,6 +14,7 @@ class MatRender : public QWidget{
         QLabel *titleLabel;
         QLabel *frameLabel;
         QImage qimage;
+        QPixmap pixmap;
 
         cv::Mat image;
 
@@ -22,6 +23,8 @@ class MatRender : public QWidget{
         int w;
 
         std::mutex frame_mutex;
+
+        
 
     public:
         bool busy = false;
