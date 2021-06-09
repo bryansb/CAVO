@@ -289,13 +289,11 @@ void MainCavoGUI::handleVideoChooserButton(){
 }
 
 void MainCavoGUI::loadVideo(string path){
-    runningVideo = false;
     if (!path.empty()) {
         pathToVideo = path; 
         threadRC->loadNewVideo(pathToVideo);
 
     }
-    runningVideo = true;
 }
 
 void MainCavoGUI::clearLayout(QLayout *layout) {
@@ -517,8 +515,6 @@ void MainCavoGUI::stopProcess(){
 }
 
 void MainCavoGUI::startProcess(){
-    thread_pool.clear();
-
     threadRC = new ThreadRenderController();
     camera = new Camera(cameraNumber);
     chromaRenderController->setCamera(camera);
