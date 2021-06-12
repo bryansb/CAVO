@@ -1,8 +1,4 @@
-#include <chrono>
-
 #include "slider_group.hpp"
-
-// #include "chroma_render_controller.hpp"
 
 #include "chroma_thread.hpp"
 
@@ -57,8 +53,8 @@ class MainCavoGUI : public QMainWindow {
         void handleCannyKernel(int);
 
     private:
+        const string APP_NAME = "C.A.V.O.";
 
-        bool using2Threads = true;
         int cameraNumber = 0; // 0: default laptop camera
 
         bool runningVideo = false;
@@ -118,8 +114,6 @@ class MainCavoGUI : public QMainWindow {
 
         int selectResultIndex = 0;
 
-        const string APP_NAME = "C.A.V.O.";
-        bool running = false;
         void startProcessConverter();
         double getTimeInMilliseconds();
         void loadVideo(string);

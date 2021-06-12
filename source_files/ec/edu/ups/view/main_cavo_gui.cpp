@@ -19,13 +19,17 @@ int MainCavoGUI::init(){
     // --- ROW 0, 0
 
     QGroupBox *boxImage = new QGroupBox("Video", widget);
-    boxImage->setFixedHeight(100);
+    boxImage->setFixedHeight(70);
+    boxImage->setContentsMargins(5,5,5,0);
     layout->addWidget(boxImage, 0, 0, 1, 2);
     QVBoxLayout *boxLayoutImage = new QVBoxLayout(boxImage);
     QWidget* imageChooserWidget = new QWidget(boxImage);
+    // imageChooserWidget->setContentsMargins(5,5,5,5);
     boxLayoutImage->addWidget(imageChooserWidget);
+    // boxLayoutImage->setContentsMargins(5,5,5,5);
 
     QHBoxLayout *videoChooserLayout = new QHBoxLayout(imageChooserWidget);
+    // videoChooserLayout->setContentsMargins(0,0,0,0);
     QLabel *dirLabel = new QLabel("Directorio:");
     videoChooserLayout->addWidget(dirLabel);
     videoPath = new QLineEdit();

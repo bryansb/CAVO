@@ -1,7 +1,6 @@
 #ifndef ChromaThread_HEADER
 #define ChromaThread_HEADER
 
-// #include "camera.hpp"
 #include "chroma_render_controller.hpp"
 #include "base.hpp"
 
@@ -9,8 +8,6 @@
 #include <QGroupBox>
 
 class ChromaThread : public QThread {
-    
-    // Q_OBJECT
 
     private:
 
@@ -51,13 +48,6 @@ class ChromaThread : public QThread {
         string path;
 
         Frame * loadVideo();
-
-    
-    // signals:
-    //     void videoFinished(bool finished);
-
-        
-    
 };
 
 class CameraThread : public QThread {
@@ -81,7 +71,7 @@ class CameraThread : public QThread {
 };
 
 class ThreadRenderController {
-    // Q_OBJECT
+
     private:
         ChromaThread *chromaThread;
         CameraThread *cameraThread;
