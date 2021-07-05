@@ -13,7 +13,7 @@ find_package( OpenCV REQUIRED )
 find_package( Threads REQUIRED )
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 
-include_directories( ${OpenCV_INCLUDE_DIRS})
+include_directories( ${OpenCV_INCLUDE_DIRS} )
 
 add_executable(${PROJECT_NAME}
   "source_files/ec/edu/ups/controller/chroma_render_controller.cpp"

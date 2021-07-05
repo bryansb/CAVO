@@ -9,8 +9,9 @@ int main(int argc, char* argv[]) {
     
     // // increase font size for better reading
     QFont defaultFont = QApplication::font();
-    defaultFont.setPointSize(defaultFont.pointSize()+2);
-    // app.setFont(defaultFont);
+    defaultFont.setFamily("Helvetica [Cronyx]");
+    
+    app.setFont(defaultFont);
     
     // modify palette to dark
     QPalette darkPalette;

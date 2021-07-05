@@ -19,17 +19,14 @@ int MainCavoGUI::init(){
     // --- ROW 0, 0
 
     QGroupBox *boxImage = new QGroupBox("Video", widget);
-    boxImage->setFixedHeight(70);
-    boxImage->setContentsMargins(5,5,5,0);
+    boxImage->setFixedHeight(80);
+    boxImage->setContentsMargins(5,15,5,0);
     layout->addWidget(boxImage, 0, 0, 1, 2);
     QVBoxLayout *boxLayoutImage = new QVBoxLayout(boxImage);
     QWidget* imageChooserWidget = new QWidget(boxImage);
-    // imageChooserWidget->setContentsMargins(5,5,5,5);
     boxLayoutImage->addWidget(imageChooserWidget);
-    // boxLayoutImage->setContentsMargins(5,5,5,5);
 
     QHBoxLayout *videoChooserLayout = new QHBoxLayout(imageChooserWidget);
-    // videoChooserLayout->setContentsMargins(0,0,0,0);
     QLabel *dirLabel = new QLabel("Directorio:");
     videoChooserLayout->addWidget(dirLabel);
     videoPath = new QLineEdit();
@@ -43,7 +40,7 @@ int MainCavoGUI::init(){
     // --- ROW 1, 0
     QGroupBox *channelBox = new QGroupBox("Canales", widget);
     channelBox->setMaximumWidth(300);
-    channelBox->setMaximumHeight(800);
+    channelBox->setMaximumHeight(700);
     layout->addWidget(channelBox, 1, 0, 2, 1);
 
     QVBoxLayout * colorSpaceLayout = new QVBoxLayout(channelBox);
@@ -53,7 +50,7 @@ int MainCavoGUI::init(){
     QHBoxLayout * kernelLayout = new QHBoxLayout(kernelWidget);
 
     kernelButton = new QPushButton("Refrescar", kernelWidget);
-    kernelButton->setStyleSheet("QPushButton {background-color: #3D72A4; color: white; font-size: 14px; font-weight: bold;}");
+    kernelButton->setStyleSheet("QPushButton {background-color: #004581; color: white; font-size: 14px;}"); //font-weight: bold;
     kernelButton->setFixedHeight(35);
     kernelButton->setFixedWidth(150);
     kernelLayout->addWidget(kernelButton);
@@ -139,7 +136,7 @@ int MainCavoGUI::init(){
     // --- ROW 1, 1
 
     QGroupBox *allFilterBox = new QGroupBox("Filtros", widget);
-    allFilterBox->setContentsMargins(0,0,0,0);
+    allFilterBox->setContentsMargins(0,10,0,0);
     allFilterBox->setMaximumHeight(150);
     layout->addWidget(allFilterBox, 1, 1, 1, 1);
     QHBoxLayout *allFilterLayout = new QHBoxLayout(allFilterBox);
